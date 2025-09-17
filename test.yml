@@ -1,0 +1,9 @@
+- name: Deploy my app
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Use global_message
+      debug:
+        msg: "{{ ip | macgen() }}"
+      vars:
+        ip: 10.0.50.23

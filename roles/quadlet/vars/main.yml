@@ -1,0 +1,8 @@
+env_dir: /home/seal/env
+container_name: authentik
+image: ghcr.io/goauthentik/server:2025.8.1
+network: macv50
+container_data_dir: "{{ data_dir ~ '/' ~ container_name }}"
+volume_src:
+ - "{{ container_data_dir }}/server/media"
+ - "{{ container_data_dir }}/server/custom-templates"

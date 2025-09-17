@@ -1,0 +1,50 @@
+--- 
+- become: true
+  block:
+    - name: Create volume directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+      loop: "{{ volume_src }}"
+
+    - name: Generate a Quadlet file
+      containers.podman.podman_container:
+        name: "{{ container_name }}"
+        state: quadlet
+        quadlet_dir: .
+
+        env_file: "{{ env_dir ~ '/' ~ container_name }}.env"
+        volume:
+          - "{{ volume_src[0] }}:/media:z"
+          - "{{ volume_src[1] }}:/templates:z"
+        command: "server"
+        image: "{{ image }}"
+        ip: "{{ ip }}"
+        network: "{{ network }}"
+        mac_address: "{{ ip | macgen() }}"
+
+        cpus: 2
+        memory: 512M
+        quadlet_options:
+          - "AutoUpdate=registry"
+          - "Pull=newer"
+          - |
+
+            {{ systemd__unit }}
+            {{ systemd__install.rstrip() }}
+      vars:
+        ip: 10.0.50.22
+        unit_wantedby:
+          - containers.target
+        unit_requires:
+          - authentik-sql.service
+          - authentik-redis.service
+        unit_after:
+          - containers.target
+          - authentik-sql.service
+          - authentik-redis.service
+    
+    - name: Chown
+      ansible.builtin.shell: chown zynf:zynf authentik.container

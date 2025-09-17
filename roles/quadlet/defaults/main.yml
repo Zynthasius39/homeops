@@ -1,0 +1,14 @@
+owner: zynt
+group: zynt
+data_dir: seal/data
+env_dir: seal/env
+
+systemd__install: |
+ [Install]
+ WantedBy={{ unit_wantedby | join(' ') }}
+systemd__unit: |
+ [Unit]
+ Requires={{ unit_requires | join(' ') }}
+ After={{ unit_after | join(' ') }}
+
+

@@ -1,4 +1,5 @@
 ---
-  - hosts: localhost
-    roles:
-      - quadlet
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - quadlet

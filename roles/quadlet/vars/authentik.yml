@@ -1,0 +1,10 @@
+---
+volume_src:
+  main:
+    - "{{ container_data_dir }}/server/media"
+    - "{{ container_data_dir }}/server/custom-templates"
+    - "{{ container_data_dir }}/server/certs"
+  pgsql:
+    - "{{ container_data_dir }}/pgsql"
+  redis:
+    - "{{ container_data_dir }}/redis"

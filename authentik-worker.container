@@ -1,0 +1,24 @@
+[Container]
+ContainerName=authentik-worker
+DNS=10.0.50.1
+EnvironmentFile=seal/env/authentik-worker.env
+Exec=worker
+Image=ghcr.io/goauthentik/server:2025.8.1
+IP=10.0.50.84
+Network=macv50
+Volume=seal/data/authentik-worker/server/media:/media:z
+Volume=seal/data/authentik-worker/server/custom-templates:/templates:z
+Volume=seal/data/authentik-worker/server/certs:/certs:z
+PodmanArgs=--cpus 2
+PodmanArgs=--mac-address 00:0C:30:47:F4:93
+PodmanArgs=--memory 512M
+AutoUpdate=registry
+Pull=newer
+
+[Unit]
+Requires=authentik-sql.service authentik-redis.service
+After=containers.target authentik-sql.service authentik-redis.service
+
+[Install]
+WantedBy=containers.target
+

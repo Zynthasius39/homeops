@@ -1,0 +1,120 @@
+---
+- name: "authentik : Load variables"
+  include_vars: "authentik.yml"
+
+- name: "authentik : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ volume_src.values() | list | flatten }}"
+  vars:
+    container_name: authentik
+
+- name: "authentik : Generate quadlet [server/worker]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: .
+
+    env_file: "{{ container_env }}"
+    volume:
+      - "{{ volume_src.main[0] }}:/media:z"
+      - "{{ volume_src.main[1] }}:/templates:z"
+      - "{{ volume_src.main[2] }}:/certs:z"
+    command: "{{ item }}"
+    image: ghcr.io/goauthentik/server:2025.8.1
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  loop:
+    - server
+    - worker
+  vars:
+    container_name: "authentik-{{ item }}"
+    unit_wantedby:
+      - containers.target
+    unit_requires:
+      - authentik-sql.service
+      - authentik-redis.service
+    unit_after:
+      - containers.target
+      - authentik-sql.service
+      - authentik-redis.service
+
+- name: "authentik : Generate quadlet [pgsql]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: .
+
+    env_file: "{{ container_env }}"
+    volume:
+      - "{{ volume_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
+    image: docker.io/library/postgres:16-alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 1
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: authentik-pgsql
+    unit_wantedby:
+      - containers.target
+    unit_after:
+      - containers.target
+
+- name: "authentik : Generate quadlet [redis]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: .
+
+    volume:
+      - "{{ volume_src.redis[0] }}:/data:Z"
+    command: --save 60 1 --loglevel warning
+    image: docker.io/library/postgres:16-alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 1
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: authentik-redis
+    unit_wantedby:
+      - containers.target
+    unit_after:
+      - containers.target
+
+- name: Chown  # XXX: Delete me!
+  ansible.builtin.shell: chown zynf:zynf -R *.container seal

@@ -1,14 +1,27 @@
-owner: zynt
-group: zynt
+---
+owner: zynf  # XXX: Delete me!
+group: zynf  # XXX: Delete me!
 data_dir: seal/data
 env_dir: seal/env
+container_env: "{{ env_dir ~ '/' ~ container_name }}.env"
+container_data_dir: "{{ data_dir ~ '/' ~ container_name }}"
+ip: "{{ container.ip[container_name] }}"
+network: macv50
+dns: 10.0.50.1
+
 
 systemd__install: |
- [Install]
- WantedBy={{ unit_wantedby | join(' ') }}
+  {% if unit_wantedby is defined %}
+  [Install]
+  WantedBy={{ unit_wantedby | join(' ') }}
+  {% endif %}
 systemd__unit: |
- [Unit]
- Requires={{ unit_requires | join(' ') }}
- After={{ unit_after | join(' ') }}
-
-
+  {% if unit_requires is defined or unit_after is defined %}
+  [Unit]
+  {% if unit_requires is defined %}
+  Requires={{ unit_requires | join(' ') }}
+  {% endif %}
+  {% if unit_after is defined %}
+  After={{ unit_after | join(' ') }}
+  {% endif %}
+  {% endif %}

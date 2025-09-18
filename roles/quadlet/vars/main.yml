@@ -1,8 +1,57 @@
-env_dir: /home/seal/env
-container_name: authentik
-image: ghcr.io/goauthentik/server:2025.8.1
-network: macv50
-container_data_dir: "{{ data_dir ~ '/' ~ container_name }}"
-volume_src:
- - "{{ container_data_dir }}/server/media"
- - "{{ container_data_dir }}/server/custom-templates"
+---
+container:
+  ip:
+    authentik-server: 10.0.50.22
+    authentik-worker: 10.0.50.84
+    authentik-pgsql: 10.0.50.82
+    authentik-redis: 10.0.50.83
+    cloudflared-npm: 10.0.70.12
+    cloudflared-wordpress: 10.0.70.13
+  env:
+    authentik:
+      AUTHENTIK_SECRET_KEY: >
+        h4kPxN4igVIjUrBJ/PukG6T72X9
+        sh5wy9jXdB72bd4qjKhkvuIcHr3
+        Hpsdm1WO51nrq76aaUOB4JAg4a
+      AUTHENTIK_REDIS__HOST: 10.0.50.83
+      AUTHENTIK_POSTGRESQL__HOST: 10.0.50.82
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: 5>Wp.z0K[F'QBR*J
+    authentik-pgsql:
+      POSTGRES_PASSWORD: 5>Wp.z0K[F'QBR*J
+      POSTGRES_USER: authentik
+      POSTGRES_DB: authentik
+    cloudflared:
+      CF_TOKEN_NPM: >
+        eyJhIjoiZDgyZWQzYmUyZWM4NDlh
+        MzYxYjUxNDY5ZWIyMDU5ZjkiLCJ0
+        IjoiNzEzN2Q5ZGMtZTZjNi00MjQ1
+        LWFlNWEtYjNlYTU2YThkZjQ5Iiwi
+        cyI6Ik5EZGtNalUzWkRRdE9ERTVZ
+        aTAwWm1VMkxUZ3lNekV0TXpNeU16
+        WXdaalE0TnprNSJ9
+      CF_TOKEN_WP: >
+        eyJhIjoiZDgyZWQzYmUyZWM4NDlh
+        MzYxYjUxNDY5ZWIyMDU5ZjkiLCJ0
+        IjoiMDI2ZWVhNGYtNjIxOC00NWE3
+        LWIxNzItY2E1MjVkNTc1Zjg2Iiwi
+        cyI6Ik0yWTRZVEExTnpJdE5tUTVa
+        aTAwWmpJNExXSmhOekF0WVdOa05q
+        WTFaV1E0TW1RdyJ9
+    minecraft-bedrock:
+      UID: 1000
+      GID: 1000
+      EULA: true
+    nextcloud:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: S3CR3TV4LU3
+      POSTGRES_HOST: postgres.nextcloud.cloud.home.alak
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: S3CR3TV4LU3
+      NEXTCLOUD_TRUSTED_DOMAINS: drive.home.alak
+    nextcloud-pgsql:
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: S3CR3TV4LU3
+      PGDATA: /var/lib/postgresql/data/pgdata

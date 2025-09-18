@@ -1,0 +1,20 @@
+[Container]
+ContainerName=authentik-redis
+DNS=10.0.50.1
+Exec=--save 60 1 --loglevel warning
+Image=docker.io/library/postgres:16-alpine
+IP=10.0.50.83
+Network=macv50
+Volume=seal/data/authentik-redis/redis:/data:Z
+PodmanArgs=--cpus 1
+PodmanArgs=--mac-address 00:0C:30:7C:6A:03
+PodmanArgs=--memory 512M
+AutoUpdate=registry
+Pull=newer
+
+[Unit]
+After=containers.target
+
+[Install]
+WantedBy=containers.target
+

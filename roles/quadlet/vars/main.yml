@@ -8,14 +8,10 @@ container:
     cloudflared-npm: 10.0.70.12
     cloudflared-wordpress: 10.0.70.13
     collabora-code: 10.0.50.31
+    cowrie: 10.0.50.36
   desc:
-    authentik-server: Authentik Server Container
-    authentik-worker: Authentik Worker Container
     authentik-pgsql: Authentik PostgreSQL Container
-    authentik-redis: Authentik Redis Container
-    cloudflared-npm: Cloudflared NPM Container
-    cloudflared-wordpress: Cloudflared Wordpress Container
-    collabora-code: Collabora Code Container
+    cloudflared-npm: Cloudflared NPM
   env:
     authentik:
       AUTHENTIK_SECRET_KEY: >

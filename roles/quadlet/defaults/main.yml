@@ -23,12 +23,23 @@ systemd__install: |
   WantedBy={{ unit_wantedby | join(' ') }}
   {% endif %}
 systemd__unit: |
-  {% if unit_requires is defined or unit_after is defined %}
   [Unit]
+  {% if item is defined %}
+  Description={{
+    container.desc[container_name ~ '-' ~ item] |
+    default(
+    container_name | capitalize ~ ' ' ~ item | capitalize ~ ' Container'
+    )
+  }}
+  {% else %}
+  Description={{
+    container.desc[container_name] |
+    default(container_name | capitalize ~ ' Container')
+  }}
+  {% endif %}
   {% if unit_requires is defined %}
   Requires={{ unit_requires | join(' ') }}
   {% endif %}
   {% if unit_after is defined %}
   After={{ unit_after | join(' ') }}
-  {% endif %}
   {% endif %}

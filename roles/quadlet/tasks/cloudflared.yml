@@ -1,5 +1,5 @@
 ---
-- name: "cloudflared : Generate quadlets [npm/wordpress]"
+- name: "{{ task }} : Generate quadlets [npm/wordpress]"
   containers.podman.podman_container:
     name: "{{ container_name ~ '-' ~ item }}"
     state: quadlet

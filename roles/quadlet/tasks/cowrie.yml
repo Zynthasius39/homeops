@@ -1,6 +1,6 @@
 ---
 - name: "{{ task }} : Load variables"
-  include_vars: "collabora-code.yml"
+  include_vars: "cowrie.yml"
 
 - name: "{{ task }} : Create volume directories"
   ansible.builtin.file:
@@ -19,8 +19,9 @@
     quadlet_dir: "{{ quadlet_dir }}"
 
     volume:
-      - "{{ mount_src[0] }}:/etc/coolwsd/coolwsd.xml:Z"
-    image: docker.io/collabora/code
+      - "{{ mount_src[0] }}:/cowrie/cowrie-git/etc:Z"
+      - "{{ mount_src[1] }}:/cowrie/cowrie-git/var/log/cowrie:Z"
+    image: docker.io/cowrie/cowrie:latest
     ip: "{{ ip }}"
     dns: "{{ dns }}"
     network: "{{ network }}"
@@ -36,7 +37,7 @@
         {{ systemd__unit }}
         {{ systemd__install.rstrip() }}
   vars:
-    container_name: collabora-code
+    container_name: cowrie
     unit_wantedby:
       - containers.target
     unit_after:

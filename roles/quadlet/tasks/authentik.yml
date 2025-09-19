@@ -1,8 +1,8 @@
 ---
-- name: "authentik : Load variables"
+- name: "{{ task }} : Load variables"
   include_vars: "authentik.yml"
 
-- name: "authentik : Create volume directories"
+- name: "{{ task }} : Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
@@ -12,7 +12,7 @@
   vars:
     container_name: authentik
 
-- name: "authentik : Generate quadlets [server/worker]"
+- name: "{{ task }} : Generate quadlets [server/worker]"
   containers.podman.podman_container:
     name: "{{ container_name ~ '-' ~ item }}"
     state: quadlet
@@ -55,7 +55,7 @@
       - authentik-sql.service
       - authentik-redis.service
 
-- name: "authentik : Generate quadlet [pgsql]"
+- name: "{{ task }} : Generate quadlet [pgsql]"
   containers.podman.podman_container:
     name: "{{ container_name }}"
     state: quadlet
@@ -86,7 +86,7 @@
     unit_after:
       - containers.target
 
-- name: "authentik : Generate quadlet [redis]"
+- name: "{{ task }} : Generate quadlet [redis]"
   containers.podman.podman_container:
     name: "{{ container_name }}"
     state: quadlet

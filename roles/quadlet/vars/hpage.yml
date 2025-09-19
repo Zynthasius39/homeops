@@ -1,0 +1,5 @@
+---
+network: macv70
+mount_src:
+  - "{{ container_data_dir }}/shared/"
+  - "/var/log/beusproxy/"

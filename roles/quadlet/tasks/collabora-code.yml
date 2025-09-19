@@ -1,6 +1,6 @@
 ---
 - name: "{{ task }} : Load variables"
-  include_vars: "collabora-code.yml"
+  include_vars: "{{ task }}"
 
 - name: "{{ task }} : Create volume directories"
   ansible.builtin.file:
@@ -10,7 +10,7 @@
     group: "{{ group }}"
   loop: "{{ mount_src }}"
   vars:
-    container_name: authentik
+    container_name: collabora-code
 
 - name: "{{ task }} : Generate quadlet"
   containers.podman.podman_container:

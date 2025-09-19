@@ -8,30 +8,31 @@
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-  loop: "{{ mount_src.values() | list | flatten }}"
+  loop: "{{ mount_src }}"
   vars:
-    container_name: authentik
+    container_name: hpage
 
-- name: "{{ task }} : Generate quadlets [server/worker]"
+- name: "{{ task }} : Generate quadlets [prod/demo]"
   containers.podman.podman_container:
-    name: "{{ container_name ~ '-' ~ item }}"
+    name: "{{ container_name }}"
     state: quadlet
     quadlet_dir: "{{ quadlet_dir }}"
 
-    env_file: "{{ container_env }}"
+    env_file: >-
+      {{
+        ([env_dir ~ '/' ~ 'hpage-api-prod.env'] if item == 'demo' else []) +
+        [container_env]
+      }}
     volume:
-      - "{{ mount_src.main[0] }}:/media:z"
-      - "{{ mount_src.main[1] }}:/templates:z"
-      - "{{ mount_src.main[2] }}:/certs:z"
-    command: "{{ item }}"
-    image: ghcr.io/goauthentik/server:2025.8.1
+      - "{{ mount_src[0] }}:/hpage/shared:z"
+    image: localhost/zynthasius/beusproxy:alpine
     ip: "{{ ip }}"
     dns: "{{ dns }}"
     network: "{{ network }}"
     mac_address: "{{ ip | macgen() }}"
 
-    cpus: 2
-    memory: 512M
+    cpus: 4
+    memory: 2G
     quadlet_options:
       - "AutoUpdate=registry"
       - "Pull=newer"
@@ -40,22 +41,16 @@
         {{ systemd__unit }}
         {{ systemd__install.rstrip() }}
   loop:
-    - server
-    - worker
+    - prod
+    - demo
   vars:
-    container_name: authentik
-    ip: "{{ container.ip[container_name ~ '-' ~ item] }}"
+    container_name: "hpage-api-{{ item }}"
     unit_wantedby:
-      - containers.target
-    unit_requires:
-      - authentik-sql.service
-      - authentik-redis.service
+      - hpage-stack.target
     unit_after:
-      - containers.target
-      - authentik-sql.service
-      - authentik-redis.service
+      - hpage-stack.target
 
-- name: "{{ task }} : Generate quadlet [pgsql]"
+- name: "{{ task }} : Generate quadlets [bot]"
   containers.podman.podman_container:
     name: "{{ container_name }}"
     state: quadlet
@@ -63,15 +58,16 @@
 
     env_file: "{{ container_env }}"
     volume:
-      - "{{ mount_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
-    image: docker.io/library/postgres:16-alpine
+      - "{{ mount_src[0] }}:/hpage/shared:z"
+      - "{{ mount_src[1] }}:/hpage/log:z"
+    image: localhost/zynthasius/beusproxy:bot-alpine
     ip: "{{ ip }}"
     dns: "{{ dns }}"
     network: "{{ network }}"
     mac_address: "{{ ip | macgen() }}"
 
-    cpus: 1
-    memory: 512M
+    cpus: 4
+    memory: 2G
     quadlet_options:
       - "AutoUpdate=registry"
       - "Pull=newer"
@@ -80,29 +76,30 @@
         {{ systemd__unit }}
         {{ systemd__install.rstrip() }}
   vars:
-    container_name: authentik-pgsql
+    container_name: hpage-bot
+    container_env: "{{ env_dir }}/hpage-api-prod.env"
     unit_wantedby:
-      - containers.target
+      - hpage-stack.target
     unit_after:
-      - containers.target
+      - hpage-stack.target
+      - hpage-web.service
+    unit_requires:
+      - hpage-web.service
 
-- name: "{{ task }} : Generate quadlet [redis]"
+- name: "{{ task }} : Generate quadlets [web]"
   containers.podman.podman_container:
     name: "{{ container_name }}"
     state: quadlet
     quadlet_dir: "{{ quadlet_dir }}"
 
-    volume:
-      - "{{ mount_src.redis[0] }}:/data:Z"
-    command: --save 60 1 --loglevel warning
-    image: docker.io/library/postgres:16-alpine
+    image: localhost/zynthasius/beusp:alpine
     ip: "{{ ip }}"
     dns: "{{ dns }}"
     network: "{{ network }}"
     mac_address: "{{ ip | macgen() }}"
 
-    cpus: 1
-    memory: 512M
+    cpus: 4
+    memory: 2G
     quadlet_options:
       - "AutoUpdate=registry"
       - "Pull=newer"
@@ -111,8 +108,13 @@
         {{ systemd__unit }}
         {{ systemd__install.rstrip() }}
   vars:
-    container_name: authentik-redis
+    container_name: hpage-web
     unit_wantedby:
-      - containers.target
+      - hpage-stack.target
     unit_after:
-      - containers.target
+      - hpage-stack.target
+      - hpage-api-prod.service
+      - hpage-api-demo.service
+    unit_requires:
+      - hpage-api-prod.service
+      - hpage-api-demo.service

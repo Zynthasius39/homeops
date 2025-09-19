@@ -1,40 +1,40 @@
 ---
-- name: "{{ task }} : Load variables"
-  include_vars: "{{ task }}"
+# FIX: Task group level vars
+- vars: {{ lookup('file', role_path ~ '/vars/group1.yml') | from_yaml }}
+  block:
+    - name: "{{ task }} : Create volume directories"
+      ansible.builtin.file:
+        path: "{{ item | dirname }}"
+        state: directory
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+      loop: "{{ mount_src }}"
 
-- name: "{{ task }} : Create volume directories"
-  ansible.builtin.file:
-    path: "{{ item | dirname }}"
-    state: directory
-    owner: "{{ owner }}"
-    group: "{{ group }}"
-  loop: "{{ mount_src }}"
+    - name: "{{ task }} : Generate quadlet"
+      containers.podman.podman_container:
+        name: "{{ container_name }}"
+        state: quadlet
+        quadlet_dir: "{{ quadlet_dir }}"
 
-- name: "{{ task }} : Generate quadlet"
-  containers.podman.podman_container:
-    name: "{{ container_name }}"
-    state: quadlet
-    quadlet_dir: "{{ quadlet_dir }}"
+        volume:
+          - "{{ mount_src[0] }}:/app/data:Z"
+        image: "{{ container_image }}"
+        ip: "{{ ip }}"
+        dns: "{{ dns }}"
+        network: "{{ network }}"
+        mac_address: "{{ ip | macgen() }}"
 
-    volume:
-      - "{{ mount_src[0] }}:/app/data:Z"
-    image: "{{ container_image }}"
-    ip: "{{ ip }}"
-    dns: "{{ dns }}"
-    network: "{{ network }}"
-    mac_address: "{{ ip | macgen() }}"
+        cpus: 2
+        memory: 512M
+        quadlet_options:
+          - "AutoUpdate=registry"
+          - "Pull=newer"
+          - |
 
-    cpus: 2
-    memory: 512M
-    quadlet_options:
-      - "AutoUpdate=registry"
-      - "Pull=newer"
-      - |
-
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
-  vars:
-    unit_wantedby:
-      - containers.target
-    unit_after:
-      - containers.target
+            {{ systemd__unit }}
+            {{ systemd__install.rstrip() }}
+      vars:
+        unit_wantedby:
+          - containers.target
+        unit_after:
+          - containers.target

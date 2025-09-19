@@ -22,12 +22,18 @@ container:
     minecraft-nvanil: 10.0.70.74
     sky-wings-api: 10.0.50.32
     sws: 10.0.50.98
+    wikijs: 10.0.50.28
+    wordpress-web: 10.0.50.30
+    wordpress-mysql: 10.0.50.29
   image:
     collabora-code: docker.io/collabora/code
     kuma: docker.io/louislam/uptime-kuma:1
     sky-wings-api: localhost/anarfatali/sky-wings:latest
     sky-wings-pgsql: docker.io/library/postgres:17-alpine
     sws: ghcr.io/static-web-server/static-web-server:2
+    wikijs: ghcr.io/requarks/wiki:2
+    wordpress-web: docker.io/wordpress
+    wordpress-mysql: docker.io/mysql:8.0
   desc:
     authentik-pgsql: Authentik PostgreSQL Container
     cloudflared-npm: Cloudflared NPM Container
@@ -46,6 +52,8 @@ container:
     sky-wings-pgsql: SkyWings PostgreSQL Container
     sky-wings-net: SkyWings Network
     sws: Static Web Server Container
+    wordpress-web: Wordpress Web Container
+    wordpress-mysql: Wordpress MySQL Container
   env:
     authentik:
       AUTHENTIK_SECRET_KEY: >-
@@ -211,3 +219,16 @@ container:
       POSTGRES_PASSWORD: postgres
     sws:
       SERVER_ROOT: /sws
+    wikijs:
+      DB_TYPE: sqlite
+      DB_FILEPATH: /data/wikijs.db
+    wordpress-web:
+      WORDPRESS_DB_HOST: 10.0.50.29
+      WORDPRESS_DB_USER: negadmin
+      WORDPRESS_DB_PASSWORD: Y&un35~EJEqxP#HS
+      WORDPRESS_DB_NAME: negansdb
+    wordpress-mysql:
+      MYSQL_DATABASE: negansdb
+      MYSQL_USER: negadmin
+      MYSQL_PASSWORD: Y&un35~EJEqxP#HS
+      MYSQL_RANDOM_ROOT_PASSWORD: 1

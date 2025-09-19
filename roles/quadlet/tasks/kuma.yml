@@ -9,8 +9,6 @@
     owner: "{{ owner }}"
     group: "{{ group }}"
   loop: "{{ mount_src }}"
-  vars:
-    container_name: collabora-code
 
 - name: "{{ task }} : Generate quadlet"
   containers.podman.podman_container:
@@ -19,7 +17,7 @@
     quadlet_dir: "{{ quadlet_dir }}"
 
     volume:
-      - "{{ mount_src[0] }}:/etc/coolwsd/coolwsd.xml:Z"
+      - "{{ mount_src[0] }}:/app/data:Z"
     image: "{{ container_image }}"
     ip: "{{ ip }}"
     dns: "{{ dns }}"
@@ -36,7 +34,6 @@
         {{ systemd__unit }}
         {{ systemd__install.rstrip() }}
   vars:
-    container_name: collabora-code
     unit_wantedby:
       - containers.target
     unit_after:

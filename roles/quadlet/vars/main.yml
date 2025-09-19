@@ -14,15 +14,20 @@ container:
     hpage-api-demo: 10.0.70.25
     hpage-bot: 10.0.70.22
     hpage-web: 10.0.70.24
+    kuma: 10.0.50.95
     minecraft-bedrock: 10.0.70.73
     minecraft-bmc5: 10.0.70.75  # TODO: Firewall fix!
     minecraft-gtcp4: 10.0.70.71
     minecraft-gtcp5: 10.0.70.72
     minecraft-nvanil: 10.0.70.74
     sky-wings-api: 10.0.50.32
+    sws: 10.0.50.98
   image:
+    collabora-code: docker.io/collabora/code
+    kuma: docker.io/louislam/uptime-kuma:1
     sky-wings-api: localhost/anarfatali/sky-wings:latest
     sky-wings-pgsql: docker.io/library/postgres:17-alpine
+    sws: ghcr.io/static-web-server/static-web-server:2
   desc:
     authentik-pgsql: Authentik PostgreSQL Container
     cloudflared-npm: Cloudflared NPM Container
@@ -31,6 +36,7 @@ container:
     hpage-api-prod: Beusproxy uWSGI Production Container
     hpage-bot: Beusproxy Bot Container
     hpage-web: Beusp Nginx Container
+    kuma: Uptime Kuma Container
     minecraft-bedrock: Minecraft Bedrock Server Container
     minecraft-bmc5: Better Minecraft 5 Container
     minecraft-gtcp4: GregTech Community Pack Container
@@ -39,6 +45,7 @@ container:
     sky-wings-api: SkyWings Laravel Container
     sky-wings-pgsql: SkyWings PostgreSQL Container
     sky-wings-net: SkyWings Network
+    sws: Static Web Server Container
   env:
     authentik:
       AUTHENTIK_SECRET_KEY: >-
@@ -202,3 +209,5 @@ container:
       POSTGRES_DB: sky-wings
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    sws:
+      SERVER_ROOT: /sws

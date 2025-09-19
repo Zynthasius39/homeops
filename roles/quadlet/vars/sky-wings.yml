@@ -1,0 +1,12 @@
+---
+container_data_dir: "{{ data_dir ~ '/' ~ 'sky-wings' }}"
+mount_src:
+  - "{{ container_data_dir }}/storage_public/"
+  - "{{ container_data_dir }}/pgsql/"
+net:
+  - name: sky-wings-net
+    quadlet_filename: sky-wings
+    subnet: 10.89.0.0/24
+    ip:
+      sky-wings-api: 10.89.0.2
+      sky-wings-pgsql: 10.89.0.3

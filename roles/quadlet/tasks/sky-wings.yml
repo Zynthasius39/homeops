@@ -1,0 +1,92 @@
+---
+- name: "{{ task }} : Load variables"
+  include_vars: "{{ task }}"
+
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src }}"
+  vars:
+    container_name: sky-wings
+
+- name: "{{ task }} : Generate quadlets [api]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: "{{ container_env }}"
+    volume:
+      - "{{ mount_src[0] }}:/var/www/storage/app/public:Z"
+    image: "{{ container_image }}"
+    network:
+      - "{{ network }}:ip={{ ip }}:mac={{ ip | macgen() }}"
+      - "{{ net[0].name }}:ip={{ net[0].ip[container_name] }}"
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: sky-wings-api
+    unit_requires:
+      - sky-wings-pgsql.service
+      - sky-wings-network.service
+    unit_after:
+      - containers.target
+      - sky-wings-pgsql.service
+      - sky-wings-network.service
+
+- name: "{{ task }} : Generate quadlets [pgsql]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: "{{ container_env }}"
+    volume:
+      - "{{ mount_src[1] }}:/var/lib/postgresql/data:Z"
+    image: "{{ container_image }}"
+    network: "{{ net[0].name }}:ip={{ net[0].ip[container_name] }}"
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: sky-wings-pgsql
+    unit_requires:
+      - sky-wings-network.service
+    unit_after:
+      - containers.target
+      - sky-wings-network.service
+
+- name: "{{ task }} : Generate quadlets [network]"
+  containers.podman.podman_network:
+    name: "{{ net[0].name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+    quadlet_filename: "{{ net[0].quadlet_filename }}"
+    disable_dns: true
+    internal: true
+    subnet: "{{ net[0].subnet }}"
+    quadlet_options:
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: "{{ net[0].name }}"
+    unit_after:
+      - containers.target

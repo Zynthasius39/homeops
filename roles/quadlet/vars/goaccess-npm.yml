@@ -1,0 +1,4 @@
+---
+mount_src:
+  - "{{ container_data_dir }}/storage/"
+  - "{{ data_dir }}/npm/data/logs/"

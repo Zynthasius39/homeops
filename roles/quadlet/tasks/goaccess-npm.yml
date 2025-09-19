@@ -1,0 +1,44 @@
+---
+- name: "{{ task }} : Load variables"
+  include_vars: "{{ task }}"
+
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src }}"
+  vars:
+    container_name: goaccess-npm
+
+- name: "{{ task }} : Generate quadlet"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    volume:
+      - "{{ mount_src[0] }}:/config:Z"
+      - "{{ mount_src[1] }}:/opt/log:z"
+    image: docker.io/gregyankovoy/goaccess
+    ip: "{{ ip }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 1
+    memory: 128M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: goaccess-npm
+    unit_requires:
+      - npm.service
+    unit_after:
+      - containers.target
+      - npm.service

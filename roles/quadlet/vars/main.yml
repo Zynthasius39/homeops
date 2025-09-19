@@ -9,20 +9,39 @@ container:
     cloudflared-wordpress: 10.0.70.13
     collabora-code: 10.0.50.31
     cowrie: 10.0.50.36
+    goaccess-npm: 10.0.50.27
     hpage-api-prod: 10.0.70.23
     hpage-api-demo: 10.0.70.25
-    hpage-bot: 10.0.70.25
+    hpage-bot: 10.0.70.22
     hpage-web: 10.0.70.24
+    minecraft-bedrock: 10.0.70.73
+    minecraft-bmc5: 10.0.70.75  # TODO: Firewall fix!
+    minecraft-gtcp4: 10.0.70.71
+    minecraft-gtcp5: 10.0.70.72
+    minecraft-nvanil: 10.0.70.74
+    sky-wings-api: 10.0.50.32
+  image:
+    sky-wings-api: localhost/anarfatali/sky-wings:latest
+    sky-wings-pgsql: docker.io/library/postgres:17-alpine
   desc:
     authentik-pgsql: Authentik PostgreSQL Container
-    cloudflared-npm: Cloudflared NPM
+    cloudflared-npm: Cloudflared NPM Container
+    goaccess-npm: GoAccess NPM Container
     hpage-api-demo: Beusproxy uWSGI Demo Container
     hpage-api-prod: Beusproxy uWSGI Production Container
     hpage-bot: Beusproxy Bot Container
     hpage-web: Beusp Nginx Container
+    minecraft-bedrock: Minecraft Bedrock Server Container
+    minecraft-bmc5: Better Minecraft 5 Container
+    minecraft-gtcp4: GregTech Community Pack Container
+    minecraft-gtcp5: GregTech Community Pack Sandbox Container
+    minecraft-nvanil: Minecraft Negans Vanilla Container
+    sky-wings-api: SkyWings Laravel Container
+    sky-wings-pgsql: SkyWings PostgreSQL Container
+    sky-wings-net: SkyWings Network
   env:
     authentik:
-      AUTHENTIK_SECRET_KEY: >
+      AUTHENTIK_SECRET_KEY: >-
         h4kPxN4igVIjUrBJ/PukG6T72X9
         sh5wy9jXdB72bd4qjKhkvuIcHr3
         Hpsdm1WO51nrq76aaUOB4JAg4a
@@ -36,7 +55,7 @@ container:
       POSTGRES_USER: authentik
       POSTGRES_DB: authentik
     cloudflared:
-      CF_TOKEN_NPM: >
+      CF_TOKEN_NPM: >-
         eyJhIjoiZDgyZWQzYmUyZWM4NDlh
         MzYxYjUxNDY5ZWIyMDU5ZjkiLCJ0
         IjoiNzEzN2Q5ZGMtZTZjNi00MjQ1
@@ -44,7 +63,7 @@ container:
         cyI6Ik5EZGtNalUzWkRRdE9ERTVZ
         aTAwWm1VMkxUZ3lNekV0TXpNeU16
         WXdaalE0TnprNSJ9
-      CF_TOKEN_WORDPRESS: >
+      CF_TOKEN_WORDPRESS: >-
         eyJhIjoiZDgyZWQzYmUyZWM4NDlh
         MzYxYjUxNDY5ZWIyMDU5ZjkiLCJ0
         IjoiMDI2ZWVhNGYtNjIxOC00NWE3
@@ -52,22 +71,6 @@ container:
         cyI6Ik0yWTRZVEExTnpJdE5tUTVa
         aTAwWmpJNExXSmhOekF0WVdOa05q
         WTFaV1E0TW1RdyJ9
-    minecraft-bedrock:
-      UID: 1000
-      GID: 1000
-      EULA: true
-    nextcloud:
-      POSTGRES_DB: nextcloud
-      POSTGRES_USER: nextcloud
-      POSTGRES_PASSWORD: S3CR3TV4LU3
-      POSTGRES_HOST: postgres.nextcloud.cloud.home.alak
-      NEXTCLOUD_ADMIN_USER: admin
-      NEXTCLOUD_ADMIN_PASSWORD: S3CR3TV4LU3
-      NEXTCLOUD_TRUSTED_DOMAINS: drive.home.alak
-    nextcloud-pgsql:
-      POSTGRES_USER: nextcloud
-      POSTGRES_PASSWORD: S3CR3TV4LU3
-      PGDATA: /var/lib/postgresql/data/pgdata
     hpage-api-prod:
       APP_NAME: beusproxy
       DATABASE: shared/beusp.db
@@ -91,5 +94,111 @@ container:
     hpage-api-demo:
       TMSAPI_OFFLINE: true
       BOT_ENABLED: false
-    hpage-bot: 10.0.70.25
-    hpage-web: 10.0.70.24
+    minecraft-bedrock:
+      UID: 1000
+      GID: 1000
+      EULA: true
+    minecraft-gtcp4:
+      UID: 1000
+      GID: 1000
+      EULA: true
+      TYPE: CUSTOM
+      CUSTOM_SERVER: forge-1.12.2-14.23.5.2860.jar
+      SERVER_HOST: 10.0.50.71
+      RCON_PASSWORD: it1162beuqu
+      TZ: Asia/Baku
+      OVERRIDE_SERVER_PROPERTIES: false
+      OVERRIDE_WHITELIST: false
+      SKIP_SERVER_PROPERTIES: true
+      MEMORY: 7G
+    minecraft-gtcp5:
+      MEMORY: 4G
+    minecraft-nvanil:
+      UID: 1000
+      GID: 1000
+      TZ: Asia/Baku
+      SERVER_HOST: 10.0.50.74
+      RCON_PASSWORD: S3CR3TV4LU3
+      OVERRIDE_SERVER_PROPERTIES: false
+      CUSTOM_SERVER: minecraft_server.1.21.4.jar
+      OVERRIDE_WHITELIST: false
+      SKIP_SERVER_PROPERTIES: true
+      MEMORY: 2G
+      EULA: true
+      VERSION: 1.21.4
+      TYPE: LEAF
+    nextcloud:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: S3CR3TV4LU3
+      POSTGRES_HOST: postgres.nextcloud.cloud.home.alak
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: S3CR3TV4LU3
+      NEXTCLOUD_TRUSTED_DOMAINS: drive.home.alak
+    nextcloud-pgsql:
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: S3CR3TV4LU3
+      PGDATA: /var/lib/postgresql/data/pgdata
+    sky-wings-api:
+      APP_NAME: Laravel
+      APP_ENV: local
+      APP_KEY: base64:D2X5I8/Hbst+kjpkecr6+q0Bj1I22og83BrE2xPf1hM=
+      APP_DEBUG: true
+      APP_URL: http://localhost
+
+      LOG_CHANNEL: stack
+      LOG_DEPRECATIONS_CHANNEL: null
+      LOG_LEVEL: debug
+
+      DB_CONNECTION: pgsql
+      DB_HOST: 10.89.0.3
+      DB_PORT: 5432
+      DB_DATABASE: sky-wings
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+      BROADCAST_DRIVER: log
+      CACHE_DRIVER: file
+      FILESYSTEM_DISK: local
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: file
+      SESSION_LIFETIME: 120
+
+      MEMCACHED_HOST: 127.0.0.1
+
+      REDIS_HOST: 127.0.0.1
+      REDIS_PASSWORD: null
+      REDIS_PORT: 6379
+
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_USERNAME: null
+      MAIL_PASSWORD: null
+      MAIL_ENCRYPTION: null
+      MAIL_FROM_ADDRESS: "hello@example.com"
+      MAIL_FROM_NAME: "${APP_NAME}"
+
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_BUCKET:
+      AWS_USE_PATH_STYLE_ENDPOINT: false
+
+      PUSHER_APP_ID:
+      PUSHER_APP_KEY:
+      PUSHER_APP_SECRET:
+      PUSHER_HOST:
+      PUSHER_PORT: 443
+      PUSHER_SCHEME: https
+      PUSHER_APP_CLUSTER: mt1
+
+      VITE_PUSHER_APP_KEY: "${PUSHER_APP_KEY}"
+      VITE_PUSHER_HOST: "${PUSHER_HOST}"
+      VITE_PUSHER_PORT: "${PUSHER_PORT}"
+      VITE_PUSHER_SCHEME: "${PUSHER_SCHEME}"
+      VITE_PUSHER_APP_CLUSTER: "${PUSHER_APP_CLUSTER}"
+    sky-wings-pgsql:
+      POSTGRES_DB: sky-wings
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres

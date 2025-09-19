@@ -1,0 +1,24 @@
+---
+network: macv70
+bmc5:
+  user: 1000
+  group: 1000
+  command: >-
+    java
+    @user_jvm_args.txt
+    @libraries/net/neoforged/neoforge/21.1.197/unix_args.txt
+container_data_dir: "{{ data_dir ~ '/' ~ 'minecraft' }}"
+mount_src:
+  bedrock:
+    - "{{ container_data_dir }}/bedrock/"
+  bmc5:
+    - "{{ container_data_dir }}/bmc5/"
+    - "/media/vault/containers/minecraft-bmc5/backups/"
+  gtcp4:
+    - "{{ container_data_dir }}/gtcp4/"
+    - "/media/vault/containers/minecraft-gtcp4/backups/"
+  gtcp5:
+    - "{{ container_data_dir }}/gtcp5/"
+  nvanil:
+    - "{{ container_data_dir }}/nvanil/"
+    - "/media/vault/containers/minecraft-nvanil/backups/"

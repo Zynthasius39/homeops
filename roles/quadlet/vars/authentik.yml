@@ -1,4 +1,5 @@
 ---
+container_data_dir: "{{ data_dir ~ '/' ~ 'authentik' }}"
 mount_src:
   main:
     - "{{ container_data_dir }}/server/media/"

@@ -6,6 +6,7 @@ env_dir: "{{ 'out/seal/env' | realpath }}"
 quadlet_dir: "{{ 'out/quadlet' | realpath }}"
 container_env: "{{ env_dir ~ '/' ~ container_name }}.env"
 container_data_dir: "{{ data_dir ~ '/' ~ container_name }}"
+container_image: "{{ container.image[container_name] }}"
 ip: "{{ container.ip[container_name] }}"
 network: macv50
 dns: >
@@ -18,8 +19,8 @@ dns: >
   }}
 
 systemd__install: |
-  {% if unit_wantedby is defined %}
   [Install]
+  {% if unit_wantedby is defined %}
   WantedBy={{ unit_wantedby | join(' ') }}
   {% endif %}
 systemd__unit: |

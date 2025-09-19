@@ -4,25 +4,25 @@
 
 - name: "authentik : Create volume directories"
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item | dirname }}"
     state: directory
     owner: "{{ owner }}"
     group: "{{ group }}"
-  loop: "{{ volume_src.values() | list | flatten }}"
+  loop: "{{ mount_src.values() | list | flatten }}"
   vars:
     container_name: authentik
 
-- name: "authentik : Generate quadlet [server/worker]"
+- name: "authentik : Generate quadlets [server/worker]"
   containers.podman.podman_container:
-    name: "{{ container_name }}"
+    name: "{{ container_name ~ '-' ~ item }}"
     state: quadlet
-    quadlet_dir: .
+    quadlet_dir: "{{ quadlet_dir }}"
 
     env_file: "{{ container_env }}"
     volume:
-      - "{{ volume_src.main[0] }}:/media:z"
-      - "{{ volume_src.main[1] }}:/templates:z"
-      - "{{ volume_src.main[2] }}:/certs:z"
+      - "{{ mount_src.main[0] }}:/media:z"
+      - "{{ mount_src.main[1] }}:/templates:z"
+      - "{{ mount_src.main[2] }}:/certs:z"
     command: "{{ item }}"
     image: ghcr.io/goauthentik/server:2025.8.1
     ip: "{{ ip }}"
@@ -43,7 +43,8 @@
     - server
     - worker
   vars:
-    container_name: "authentik-{{ item }}"
+    container_name: authentik
+    ip: "{{ container.ip[container_name ~ '-' ~ item] }}"
     unit_wantedby:
       - containers.target
     unit_requires:
@@ -58,11 +59,11 @@
   containers.podman.podman_container:
     name: "{{ container_name }}"
     state: quadlet
-    quadlet_dir: .
+    quadlet_dir: "{{ quadlet_dir }}"
 
     env_file: "{{ container_env }}"
     volume:
-      - "{{ volume_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
+      - "{{ mount_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
     image: docker.io/library/postgres:16-alpine
     ip: "{{ ip }}"
     dns: "{{ dns }}"
@@ -89,10 +90,10 @@
   containers.podman.podman_container:
     name: "{{ container_name }}"
     state: quadlet
-    quadlet_dir: .
+    quadlet_dir: "{{ quadlet_dir }}"
 
     volume:
-      - "{{ volume_src.redis[0] }}:/data:Z"
+      - "{{ mount_src.redis[0] }}:/data:Z"
     command: --save 60 1 --loglevel warning
     image: docker.io/library/postgres:16-alpine
     ip: "{{ ip }}"
@@ -115,6 +116,3 @@
       - containers.target
     unit_after:
       - containers.target
-
-- name: Chown  # XXX: Delete me!
-  ansible.builtin.shell: chown zynf:zynf -R *.container seal

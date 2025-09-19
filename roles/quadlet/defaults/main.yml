@@ -1,14 +1,21 @@
 ---
-owner: zynf  # XXX: Delete me!
-group: zynf  # XXX: Delete me!
-data_dir: seal/data
-env_dir: seal/env
+owner: zynf
+group: zynf
+data_dir: "{{ 'out/seal/data' | realpath }}"
+env_dir: "{{ 'out/seal/env' | realpath }}"
+quadlet_dir: "{{ 'out/quadlet' | realpath }}"
 container_env: "{{ env_dir ~ '/' ~ container_name }}.env"
 container_data_dir: "{{ data_dir ~ '/' ~ container_name }}"
 ip: "{{ container.ip[container_name] }}"
 network: macv50
-dns: 10.0.50.1
-
+dns: >
+  {{
+    {
+      "macv10": "10.0.10.1",
+      "macv50": "10.0.50.1",
+      "macv70": "10.0.70.1"
+    }[network] | default('')
+  }}
 
 systemd__install: |
   {% if unit_wantedby is defined %}

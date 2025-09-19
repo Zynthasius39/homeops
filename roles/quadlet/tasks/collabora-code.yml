@@ -1,0 +1,43 @@
+---
+- name: "collabora-code : Load variables"
+  include_vars: "collabora-code.yml"
+
+- name: "collabora-code : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src }}"
+  vars:
+    container_name: authentik
+
+- name: "collabora-code : Generate quadlet"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    volume:
+      - "{{ mount_src[0] }}:/etc/coolwsd/coolwsd.xml:Z"
+    image: docker.io/collabora/code
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  vars:
+    container_name: collabora-code
+    unit_wantedby:
+      - containers.target
+    unit_after:
+      - containers.target

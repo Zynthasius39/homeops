@@ -7,6 +7,15 @@ container:
     authentik-redis: 10.0.50.83
     cloudflared-npm: 10.0.70.12
     cloudflared-wordpress: 10.0.70.13
+    collabora-code: 10.0.50.31
+  desc:
+    authentik-server: Authentik Server Container
+    authentik-worker: Authentik Worker Container
+    authentik-pgsql: Authentik PostgreSQL Container
+    authentik-redis: Authentik Redis Container
+    cloudflared-npm: Cloudflared NPM Container
+    cloudflared-wordpress: Cloudflared Wordpress Container
+    collabora-code: Collabora Code Container
   env:
     authentik:
       AUTHENTIK_SECRET_KEY: >
@@ -31,7 +40,7 @@ container:
         cyI6Ik5EZGtNalUzWkRRdE9ERTVZ
         aTAwWm1VMkxUZ3lNekV0TXpNeU16
         WXdaalE0TnprNSJ9
-      CF_TOKEN_WP: >
+      CF_TOKEN_WORDPRESS: >
         eyJhIjoiZDgyZWQzYmUyZWM4NDlh
         MzYxYjUxNDY5ZWIyMDU5ZjkiLCJ0
         IjoiMDI2ZWVhNGYtNjIxOC00NWE3

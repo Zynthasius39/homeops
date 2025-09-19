@@ -1,0 +1,40 @@
+---
+- name: "cloudflared : Generate quadlets [npm/wordpress]"
+  containers.podman.podman_container:
+    name: "{{ container_name ~ '-' ~ item }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: "{{ container_env }}"
+    command: >
+      tunnel --no-autoupdate run --token $CF_TOKEN_{{ item | upper }}
+    image: docker.io/cloudflare/cloudflared:latest
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ systemd__unit }}
+        {{ systemd__install.rstrip() }}
+  loop:
+    - npm
+    - wordpress
+  vars:
+    container_name: cloudflared
+    ip: "{{ container.ip[container_name ~ '-' ~ item] }}"
+    network: macv70
+    unit_wantedby:
+      - containers.target
+    unit_requires:
+      - wait-for-internet.service
+    unit_after:
+      - containers.target
+      - wait-for-internet.service
+      - "{{ item }}.service"

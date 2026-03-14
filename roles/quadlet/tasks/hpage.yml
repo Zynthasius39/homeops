@@ -38,8 +38,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   loop:
     - prod
     - demo
@@ -73,8 +73,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: hpage-bot
     container_env: "{{ env_dir }}/hpage-api-prod.env"
@@ -105,8 +105,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: hpage-web
     unit_wantedby:

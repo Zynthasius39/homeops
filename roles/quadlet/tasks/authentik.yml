@@ -1,34 +1,29 @@
 ---
-- name: "{{ task }} : Load variables"
-  include_vars: "{{ task }}"
-
 - name: "{{ task }} : Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
-    owner: "{{ owner }}"
-    group: "{{ group }}"
-  loop: "{{ mount_src.values() | list | flatten }}"
-  vars:
-    container_name: authentik
+    owner: "{{ quadlet.owner }}"
+    group: "{{ quadlet.group }}"
+  loop: "{{ quadlet._.mount_src.values() | list | flatten }}"
 
 - name: "{{ task }} : Generate quadlets [server/worker]"
   containers.podman.podman_container:
-    name: "{{ container_name ~ '-' ~ item }}"
+    name: "{{ quadlet._.container_name ~ '-' ~ item }}"
     state: quadlet
-    quadlet_dir: "{{ quadlet_dir }}"
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
 
-    env_file: "{{ container_env }}"
+    env_file: "{{ quadlet._.container_env }}"
     volume:
-      - "{{ mount_src.main[0] }}:/media:z"
-      - "{{ mount_src.main[1] }}:/templates:z"
-      - "{{ mount_src.main[2] }}:/certs:z"
+      - "{{ quadlet._.mount_src.main[0] }}:/media:z"
+      - "{{ quadlet._.mount_src.main[1] }}:/templates:z"
+      - "{{ quadlet._.mount_src.main[2] }}:/certs:z"
     command: "{{ item }}"
     image: ghcr.io/goauthentik/server:2025.8.1
-    ip: "{{ ip }}"
-    dns: "{{ dns }}"
-    network: "{{ network }}"
-    mac_address: "{{ ip | macgen() }}"
+    ip: "{{ quadlet._.ip }}"
+    dns: "{{ quadlet._.dns }}"
+    network: "{{ quadlet._.network }}"
+    mac_address: "{{ quadlet._.ip | macgen() }}"
 
     cpus: 2
     memory: 512M
@@ -37,14 +32,14 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
   loop:
     - server
     - worker
   vars:
-    container_name: authentik
-    ip: "{{ container.ip[container_name ~ '-' ~ item] }}"
+    quadlet_container_name: authentik
+    quadlet_ip: "{{ quadlet.container.ip[quadlet._.container_name ~ '-' ~ item] }}"
     unit_wantedby:
       - containers.target
     unit_requires:
@@ -57,18 +52,18 @@
 
 - name: "{{ task }} : Generate quadlet [pgsql]"
   containers.podman.podman_container:
-    name: "{{ container_name }}"
+    name: "{{ quadlet._.container_name }}"
     state: quadlet
-    quadlet_dir: "{{ quadlet_dir }}"
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
 
-    env_file: "{{ container_env }}"
+    env_file: "{{ quadlet._.container_env }}"
     volume:
-      - "{{ mount_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
+      - "{{ quadlet._.mount_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
     image: docker.io/library/postgres:16-alpine
-    ip: "{{ ip }}"
-    dns: "{{ dns }}"
-    network: "{{ network }}"
-    mac_address: "{{ ip | macgen() }}"
+    ip: "{{ quadlet._.ip }}"
+    dns: "{{ quadlet._.dns }}"
+    network: "{{ quadlet._.network }}"
+    mac_address: "{{ quadlet._.ip | macgen() }}"
 
     cpus: 1
     memory: 512M
@@ -77,10 +72,10 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
   vars:
-    container_name: authentik-pgsql
+    quadlet_container_name: authentik-pgsql
     unit_wantedby:
       - containers.target
     unit_after:
@@ -88,18 +83,18 @@
 
 - name: "{{ task }} : Generate quadlet [redis]"
   containers.podman.podman_container:
-    name: "{{ container_name }}"
+    name: "{{ quadlet._.container_name }}"
     state: quadlet
-    quadlet_dir: "{{ quadlet_dir }}"
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
 
     volume:
-      - "{{ mount_src.redis[0] }}:/data:Z"
+      - "{{ quadlet._.mount_src.redis[0] }}:/data:Z"
     command: --save 60 1 --loglevel warning
     image: docker.io/library/postgres:16-alpine
-    ip: "{{ ip }}"
-    dns: "{{ dns }}"
-    network: "{{ network }}"
-    mac_address: "{{ ip | macgen() }}"
+    ip: "{{ quadlet._.ip }}"
+    dns: "{{ quadlet._.dns }}"
+    network: "{{ quadlet._.network }}"
+    mac_address: "{{ quadlet._.ip | macgen() }}"
 
     cpus: 1
     memory: 512M
@@ -108,10 +103,10 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
   vars:
-    container_name: authentik-redis
+    quadlet_container_name: authentik-redis
     unit_wantedby:
       - containers.target
     unit_after:

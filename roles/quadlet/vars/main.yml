@@ -1,4 +1,65 @@
 ---
+owner: zynf
+group: zynf
+data_dir: "{{ 'out/seal/data' | realpath }}"
+env_dir: "{{ 'out/seal/env' | realpath }}"
+quadlet_dir: "{{ 'out/quadlet' | realpath }}"
+_:
+  container_name: "{{ quadlet_container_name | default(quadlet.t[task].container_name) }}"
+  container_env: "{{ quadlet.env_dir ~ '/' ~ quadlet._.container_name }}.env"
+  container_data_dir: "{{ quadlet.data_dir ~ '/' ~ quadlet._.container_name }}"
+  container_image: "{{ quadlet.container.image[quadlet._.container_name] }}"
+  ip: "{{ quadlet_ip | default(quadlet.container.ip[quadlet._.container_name]) }}"
+  mount_src: "{{ quadlet.t[task].mount_src }}"
+  network: "{{ quadlet.t[task].network | default('macv50') }}"
+  dns: >
+    {{
+      {
+        "": "",
+        "macv10": "10.0.10.1",
+        "macv50": "10.0.50.1",
+        "macv70": "10.0.70.1"
+      }[quadlet.t[task].network | default ('')]
+    }}
+__systemd_install: |
+  [Install]
+  {% if unit_wantedby is defined %}
+  WantedBy={{ unit_wantedby | join(' ') }}
+  {% endif %}
+__systemd_unit: |
+  [Unit]
+  {% if item is defined %}
+  Description={{
+    quadlet.container.desc[quadlet._.container_name ~ '-' ~ item] |
+    default(
+    quadlet._.container_name | capitalize ~ ' ' ~ item | capitalize ~ ' Container'
+    )
+  }}
+  {% else %}
+  Description={{
+    quadlet.container.desc[quadlet._.container_name] |
+    default(quadlet._.container_name | capitalize ~ ' Container')
+  }}
+  {% endif %}
+  {% if unit_requires is defined %}
+  Requires={{ unit_requires | join(' ') }}
+  {% endif %}
+  {% if unit_after is defined %}
+  After={{ unit_after | join(' ') }}
+  {% endif %}
+t:
+  authentik:
+    container_name: authentik
+    container_data_dir: "{{ quadlet.data_dir ~ '/' ~ 'authentik' }}"
+    mount_src:
+      main:
+        - "{{ quadlet._.container_data_dir }}/server/media/"
+        - "{{ quadlet._.container_data_dir }}/server/custom-templates/"
+        - "{{ quadlet._.container_data_dir }}/server/certs/"
+      pgsql:
+        - "{{ quadlet._.container_data_dir }}/pgsql/"
+      redis:
+        - "{{ quadlet._.container_data_dir }}/redis/"
 container:
   ip:
     authentik-server: 10.0.50.22

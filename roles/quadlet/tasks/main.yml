@@ -1,28 +1,34 @@
 ---
 - become: true
   block:
+    - name: Load default variables
+      include_vars:
+        file: main.yml
+        name: quadlet
+        hash_behaviour: merge
+
     - name: Create container directories
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        owner: "{{ owner }}"
-        group: "{{ group }}"
+        owner: "{{ quadlet.owner }}"
+        group: "{{ quadlet.group }}"
       loop:
-        - "{{ env_dir }}"
-        - "{{ data_dir }}"
+        - "{{ quadlet.env_dir }}"
+        - "{{ quadlet.data_dir }}"
 
 
-    - ansible.builtin.include_tasks: "{{ task }}"
+    - ansible.builtin.include_tasks: "{{ task }}.yml"
       loop:
-        # - authentik.yml
+        - authentik
         # - cloudflared.yml
         # - collabora-code.yml
         # - cowrie.yml
         # - hpage.yml
-        - kuma.yml
+        # - kuma.yml
         # - minecraft.yml
         # - goaccess-npm.yml
-        - sky-wings.yml
+        # - sky-wings.yml
         # - sws.yml
         # - wikijs.yml
         # - wordpress.yml

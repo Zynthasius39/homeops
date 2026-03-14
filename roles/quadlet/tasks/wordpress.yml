@@ -32,8 +32,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: wordpress-web
     unit_wantedby:
@@ -64,8 +64,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: wordpress-mysql
     unit_after:

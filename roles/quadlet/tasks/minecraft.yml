@@ -34,8 +34,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: minecraft-bedrock
     unit_wantedby:
@@ -71,8 +71,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: minecraft-bmc5
     unit_wantedby:
@@ -113,8 +113,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   loop:
     - gtcp4
     - gtcp5
@@ -146,8 +146,8 @@
       - "Pull=newer"
       - |
 
-        {{ systemd__unit }}
-        {{ systemd__install.rstrip() }}
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
   vars:
     container_name: minecraft-nvanil
     unit_after:

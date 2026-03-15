@@ -40,15 +40,17 @@
   vars:
     quadlet_container_name: authentik
     quadlet_ip: "{{ quadlet.container.ip[quadlet._.container_name ~ '-' ~ item] }}"
-    unit_wantedby:
-      - containers.target
-    unit_requires:
-      - authentik-sql.service
+    systemd_unit:
+      Requires:
+      - authentik-pgsql.service
       - authentik-redis.service
-    unit_after:
+      After:
       - containers.target
-      - authentik-sql.service
+      - authentik-pgsql.service
       - authentik-redis.service
+    systemd_install:
+      wantedby:
+        - containers.target
 
 - name: "{{ task }} : Generate quadlet [pgsql]"
   containers.podman.podman_container:
@@ -76,10 +78,12 @@
         {{ quadlet.__systemd_install.rstrip() }}
   vars:
     quadlet_container_name: authentik-pgsql
-    unit_wantedby:
-      - containers.target
-    unit_after:
-      - containers.target
+    systemd_unit:
+      After:
+        - containers.target
+    systemd_install:
+      WantedBy:
+        - containers.target
 
 - name: "{{ task }} : Generate quadlet [redis]"
   containers.podman.podman_container:
@@ -107,7 +111,9 @@
         {{ quadlet.__systemd_install.rstrip() }}
   vars:
     quadlet_container_name: authentik-redis
-    unit_wantedby:
-      - containers.target
-    unit_after:
-      - containers.target
+    systemd_unit:
+      After:
+        - containers.target
+    systemd_install:
+      WantedBy:
+        - containers.target

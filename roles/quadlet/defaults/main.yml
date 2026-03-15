@@ -11,7 +11,7 @@ _:
   container_image: "{{ quadlet.container.image[quadlet._.container_name] }}"
   ip: "{{ quadlet_ip | default(quadlet.container.ip[quadlet._.container_name]) }}"
   mount_src: "{{ quadlet.t[task].mount_src }}"
-  network: "{{ quadlet.t[task].network | default('macv50') }}"
+  network: "{{ quadlet.t[task].network | default('virbr0') }}"
   dns: >
     {{
       {
@@ -21,32 +21,9 @@ _:
         "virbr0": "192.168.122.1"
       }[quadlet.t[task].network | default ('')]
     }}
-__systemd_install: |
-  [Install]
-  {% if unit_wantedby is defined %}
-  WantedBy={{ unit_wantedby | join(' ') }}
-  {% endif %}
-__systemd_unit: |
-  [Unit]
-  {% if item is defined %}
-  Description={{
-    quadlet.container.desc[quadlet._.container_name ~ '-' ~ item] |
-    default(
-    quadlet._.container_name | capitalize ~ ' ' ~ item | capitalize ~ ' Container'
-    )
-  }}
-  {% else %}
-  Description={{
-    quadlet.container.desc[quadlet._.container_name] |
-    default(quadlet._.container_name | capitalize ~ ' Container')
-  }}
-  {% endif %}
-  {% if unit_requires is defined %}
-  Requires={{ unit_requires | join(' ') }}
-  {% endif %}
-  {% if unit_after is defined %}
-  After={{ unit_after | join(' ') }}
-  {% endif %}
+__systemd_install: "{{ lookup('template', 'systemd_install.j2') }}"
+__systemd_service: "{{ lookup('template', 'systemd_service.j2') }}"
+__systemd_unit: "{{ lookup('template', 'systemd_unit.j2') }}"
 t:  # Task specific variables
   authentik:
     container_name: authentik
@@ -60,3 +37,9 @@ t:  # Task specific variables
         - "{{ quadlet._.container_data_dir }}/pgsql/"
       redis:
         - "{{ quadlet._.container_data_dir }}/redis/"
+container:  # Container specific variables (categorized)
+  ip:
+    authentik-server: 10.89.0.4
+    authentik-worker: 10.89.0.5
+    authentik-pgsql: 10.89.0.6
+    authentik-redis: 10.89.0.7

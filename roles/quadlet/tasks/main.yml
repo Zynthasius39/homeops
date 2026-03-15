@@ -35,14 +35,14 @@
       loop_control:
         loop_var: task
 
-    # - name: Generate environment files
-    #   ansible.builtin.template:
-    #     src: env.j2
-    #     dest: "{{ env_dir ~ '/' ~ item.key ~ '.env' }}"
-    #     owner: "{{ owner }}"
-    #     group: "{{ group }}"
-    #     mode: "0600"
-    #   loop: "{{ container.env | dict2items }}"
+    - name: Generate environment files
+      ansible.builtin.template:
+        src: env.j2
+        dest: "{{ env_dir ~ '/' ~ item.key ~ '.env' }}"
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+        mode: "0600"
+      loop: "{{ container.env | dict2items }}"
 
     - name: Chown  # XXX: Testing!
       ansible.builtin.file:

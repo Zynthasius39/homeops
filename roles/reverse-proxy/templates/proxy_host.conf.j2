@@ -1,0 +1,40 @@
+# ------------------------------------------------------------
+{% if proxy_host.hostname is string %}
+# {{ proxy_host.hostname }}
+{% elif proxy_host.hostname is iterable %}
+# {{ proxy_host.hostname | join(' ') }}
+{% endif %}
+# ------------------------------------------------------------
+
+map $scheme $hsts_header {
+  https "max-age=63072000; preload";
+}
+
+server {
+  set $forward_scheme {{ proxy_host.forward_scheme | default('http') }};
+  set $server         "{{ proxy_host.host }}";
+  set $port           {{ proxy_host.port }};
+
+  listen 80;
+  listen [::]:80;
+
+{% if proxy_host.hostname is string %}
+  server_name {{ proxy_host.hostname }};
+  access_log /var/log/angie/{{ proxy_host.hostname }}.access.log proxy;
+  error_log /var/log/angie/{{ proxy_host.hostname }}.error.log warn;
+{% elif proxy_host.hostname is iterable %}
+  server_name {{ proxy_host.hostname | join(' ') }};
+  access_log /var/log/angie/{{ proxy_host.hostname[0] }}.access.log proxy;
+  error_log /var/log/angie/{{ proxy_host.hostname[0] }}.error.log warn;
+{% endif %}
+
+{% if proxy_host.include is defined %}
+{% for i in proxy_host.include %}
+  include http.d/include/{{ i }}.conf;
+{% endfor %}
+{% endif %}
+
+  location / {
+    include http.d/include/proxy.conf;
+  }
+}

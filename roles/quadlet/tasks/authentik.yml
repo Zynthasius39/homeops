@@ -5,51 +5,90 @@
     state: directory
     owner: "{{ quadlet.owner }}"
     group: "{{ quadlet.group }}"
-  loop: "{{ quadlet._.mount_src.values() | list | flatten }}"
+  loop: "{{ quadlet.t[task].mount_src + quadlet.t[task ~ '-pgsql'].mount_src }}"
 
-- name: "{{ task }} : Generate quadlets [server/worker]"
+- name: "{{ task }} : Generate quadlets [server]"
   containers.podman.podman_container:
-    name: "{{ quadlet._.container_name ~ '-' ~ item }}"
+    name: "{{ quadlet._.container_name }}-server"
     state: quadlet
     quadlet_dir: "{{ quadlet.quadlet_dir }}"
-
     env_file: "{{ quadlet._.container_env }}"
     volume:
-      - "{{ quadlet._.mount_src.main[0] }}:/media:z"
-      - "{{ quadlet._.mount_src.main[1] }}:/templates:z"
-      - "{{ quadlet._.mount_src.main[2] }}:/certs:z"
-    command: "{{ item }}"
-    image: ghcr.io/goauthentik/server:2025.8.1
-    ip: "{{ quadlet._.ip }}"
+      - "{{ quadlet._.mount_src[0] }}:/media:z"
+      - "{{ quadlet._.mount_src[1] }}:/templates:z"
+      - "{{ quadlet._.mount_src[2] }}:/certs:z"
+    command: server
+    image: ghcr.io/goauthentik/server:2026.2.1
     dns: "{{ quadlet._.dns }}"
-    network: "{{ quadlet._.network }}"
-    mac_address: "{{ quadlet._.ip | macgen() }}"
-
+    network:
+      - "{{ quadlet._.network }}:ip={{ quadlet._.ip }},mac={{ quadlet._.ip | macgen() }}"
+      - "{{ quadlet._.network_name }}"
+    shm_size: 512M
     cpus: 2
-    memory: 512M
+    memory: 1G
     quadlet_options:
       - "AutoUpdate=registry"
-      - "Pull=newer"
       - |
 
+        {{ quadlet.__systemd_service }}
         {{ quadlet.__systemd_unit }}
         {{ quadlet.__systemd_install.rstrip() }}
-  loop:
-    - server
-    - worker
   vars:
-    quadlet_container_name: authentik
-    quadlet_ip: "{{ quadlet.container.ip[quadlet._.container_name ~ '-' ~ item] }}"
+    systemd_service:
+      ExecStartPre: "/bin/sh -c 'until podman healthcheck run {{ quadlet._.container_name }}-pgsql; do sleep 2; done'"
+      Restart: always
+      TimeoutStartSec: 300
     systemd_unit:
       Requires:
-      - authentik-pgsql.service
-      - authentik-redis.service
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
       After:
-      - containers.target
-      - authentik-pgsql.service
-      - authentik-redis.service
+        - containers.target
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
     systemd_install:
-      wantedby:
+      WantedBy:
+        - containers.target
+
+- name: "{{ task }} : Generate quadlets [worker]"
+  containers.podman.podman_container:
+    name: "{{ quadlet._.container_name }}-worker"
+    state: quadlet
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
+    env_file: "{{ quadlet._.container_env }}"
+    volume:
+      - "{{ quadlet._.mount_src[0] }}:/media:z"
+      - "{{ quadlet._.mount_src[1] }}:/templates:z"
+      - "{{ quadlet._.mount_src[2] }}:/certs:z"
+    command: worker
+    image: ghcr.io/goauthentik/server:2026.2.1
+    network: "{{ quadlet._.network_name }}"
+    shm_size: 512M
+    user: root
+    cpus: 2
+    memory: 1G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ quadlet.__systemd_service }}
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      ExecStartPre: "/bin/sh -c 'until podman healthcheck run {{ quadlet._.container_name }}-pgsql; do sleep 2; done'"
+      Restart: always
+      TimeoutStartSec: 300
+    systemd_unit:
+      Requires:
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
+      After:
+        - containers.target
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
+    systemd_install:
+      WantedBy:
         - containers.target
 
 - name: "{{ task }} : Generate quadlet [pgsql]"
@@ -57,63 +96,38 @@
     name: "{{ quadlet._.container_name }}"
     state: quadlet
     quadlet_dir: "{{ quadlet.quadlet_dir }}"
-
     env_file: "{{ quadlet._.container_env }}"
     volume:
-      - "{{ quadlet._.mount_src.pgsql[0] }}:/var/lib/postgresql/data:Z"
+      - "{{ quadlet.t[task ~ '-pgsql'].mount_src[0] }}:/var/lib/postgresql/data:Z"
     image: docker.io/library/postgres:16-alpine
-    ip: "{{ quadlet._.ip }}"
-    dns: "{{ quadlet._.dns }}"
-    network: "{{ quadlet._.network }}"
-    mac_address: "{{ quadlet._.ip | macgen() }}"
-
+    network: "{{ quadlet._.network_name }}"
+    healthcheck: pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
+    healthcheck_interval: 30s
+    healthcheck_retries: 5
+    healthcheck_start_period: 20s
+    healthcheck_timeout: 5s
     cpus: 1
     memory: 512M
     quadlet_options:
       - "AutoUpdate=registry"
-      - "Pull=newer"
       - |
 
         {{ quadlet.__systemd_unit }}
         {{ quadlet.__systemd_install.rstrip() }}
   vars:
-    quadlet_container_name: authentik-pgsql
+    quadlet_container_name: "{{ task }}-pgsql"
     systemd_unit:
       After:
         - containers.target
-    systemd_install:
-      WantedBy:
-        - containers.target
+        - "{{ quadlet._.network_name }}-network.service"
+      Requires:
+        - "{{ quadlet._.network_name }}-network.service"
 
-- name: "{{ task }} : Generate quadlet [redis]"
-  containers.podman.podman_container:
-    name: "{{ quadlet._.container_name }}"
+- name: "{{ task }} : Generate network quadlets"
+  containers.podman.podman_network:
+    name: "{{ quadlet._.network_name }}"
+    interface_name: "podman-{{ quadlet._.network_name[:9] }}"
     state: quadlet
     quadlet_dir: "{{ quadlet.quadlet_dir }}"
-
-    volume:
-      - "{{ quadlet._.mount_src.redis[0] }}:/data:Z"
-    command: --save 60 1 --loglevel warning
-    image: docker.io/library/postgres:16-alpine
-    ip: "{{ quadlet._.ip }}"
-    dns: "{{ quadlet._.dns }}"
-    network: "{{ quadlet._.network }}"
-    mac_address: "{{ quadlet._.ip | macgen() }}"
-
-    cpus: 1
-    memory: 512M
-    quadlet_options:
-      - "AutoUpdate=registry"
-      - "Pull=newer"
-      - |
-
-        {{ quadlet.__systemd_unit }}
-        {{ quadlet.__systemd_install.rstrip() }}
-  vars:
-    quadlet_container_name: authentik-redis
-    systemd_unit:
-      After:
-        - containers.target
-    systemd_install:
-      WantedBy:
-        - containers.target
+    opt:
+      metric: 200

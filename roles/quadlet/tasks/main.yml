@@ -1,12 +1,6 @@
 ---
 - become: true
   block:
-    - name: Load default variables
-      include_vars:
-        file: main.yml
-        name: quadlet
-        hash_behaviour: merge
-
     - name: Create container directories
       ansible.builtin.file:
         path: "{{ item }}"
@@ -16,7 +10,6 @@
       loop:
         - "{{ quadlet.env_dir }}"
         - "{{ quadlet.data_dir }}"
-
 
     - ansible.builtin.include_tasks: "{{ task }}.yml"
       loop:
@@ -35,15 +28,15 @@
       loop_control:
         loop_var: task
 
-    - name: Generate environment files
-      ansible.builtin.template:
-        src: env.j2
-        dest: "{{ env_dir ~ '/' ~ item.key ~ '.env' }}"
-        owner: "{{ owner }}"
-        group: "{{ group }}"
-        mode: "0600"
-      loop: "{{ container.env | dict2items }}"
-
+    # - name: Generate environment files
+    #   ansible.builtin.template:
+    #     src: env.j2
+    #     dest: "{{ env_dir ~ '/' ~ item.key ~ '.env' }}"
+    #     owner: "{{ owner }}"
+    #     group: "{{ group }}"
+    #     mode: "0600"
+    #   loop: "{{ container.env | dict2items }}"
+    #
     - name: Chown  # XXX: Testing!
       ansible.builtin.file:
         owner: zynf

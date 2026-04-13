@@ -1,15 +1,15 @@
 [Unit]
 {% if item is defined %}
 Description={{
-  quadlet.container.desc[quadlet._.container_name ~ '-' ~ item] |
+  _quadlet.container.description |
   default(
-  quadlet._.container_name | capitalize ~ ' ' ~ item | capitalize ~ ' Container'
+  _quadlet.name | capitalize ~ ' ' ~ item | capitalize ~ ' Container'
   )
 }}
 {% else %}
 Description={{
-  quadlet.container.desc[quadlet._.container_name] |
-  default(quadlet._.container_name | capitalize ~ ' Container')
+  _quadlet.container.description |
+  default(_quadlet.name | capitalize ~ ' Container')
 }}
 {% endif %}
 {% for key, value in (systemd_unit | default({})).items() %}

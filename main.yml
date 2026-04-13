@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- hosts: jellybean
   gather_facts: false
+  become: true
   roles:
-    - quadlet
+    - reverse-proxy

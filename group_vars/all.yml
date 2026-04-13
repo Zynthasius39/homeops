@@ -1,0 +1,32 @@
+---
+_quadlet:  # quadlet internals
+  owner: "{{ quadlet.owner | default('root') }}"
+  group: "{{ quadlet.group | default('root') }}"
+  data_dir: "{{ quadlet.data_dir | default('/var/lib/containers/data') | realpath }}"
+  env_dir: "{{ quadlet.env_dir | default('/var/lib/containers/env') | realpath }}"
+  quadlet_dir: "{{ quadlet.quadlet_dir | default ('/etc/containers/systemd') | realpath }}"
+  container: "{{ quadlet_container | default(services[ansible_role_name].containers[quadlet_container_name]) }}"
+  name: "{{ quadlet_container_name }}"
+  data: "{{ _quadlet.data_dir ~ '/' ~ quadlet_container_name }}"
+  env: "{{ _quadlet.env_dir ~ '/' ~ quadlet_container_name }}.env"
+  image: "{{ _quadlet.container.image }}"
+  ip: "{{ _quadlet.container.ip }}"
+  mac_address: "{{ _quadlet.ip | macgen() }}"
+  mount_src: "{{ quadlet_mount_src | default(_quadlet.container.mount_src) }}"
+  network: "{{ _quadlet.container.network | default(quadlet.default_network) }}"
+  dns: >
+    {{
+      quadlet.dns_by_network[_quadlet.container.network | default(quadlet.default_network) | default('default')] | default({})
+    }}
+  __systemd_install: "{{ lookup('template', 'systemd_install.j2') }}"
+  __systemd_service: "{{ lookup('template', 'systemd_service.j2') }}"
+  __systemd_unit: "{{ lookup('template', 'systemd_unit.j2') }}"
+  systemd_service:
+    Restart: always
+    TimeoutStartSec: 300
+  systemd_unit:
+    After:
+      - containers.target
+  systemd_install:
+    WantedBy:
+      - containers.target

@@ -1,0 +1,32 @@
+---
+services:
+  reverse-proxy:
+    containers:
+      angie:
+        ip: 10.0.50.23
+        network: macv50
+        image: docker.angie.software/angie:1.11.4-minimal
+    proxy_hosts:
+      - hostname: wiki.alakx.com
+        host: 10.0.50.28
+        port: 3000
+        include: ['cloudflare']
+      - hostname: grafana.alakx.com
+        host: 10.0.50.91
+        port: 3000
+        include: ['cloudflare']
+      - hostname: status.alakx.com
+        host: 10.0.50.95
+        port: 3001
+        include: ['cloudflare']
+      - hostname: beu.alakx.com
+        host: 10.0.70.24
+        port: 80
+        include: ['cloudflare']
+      - hostname:
+          - bridgespero.com
+          - prev.bridgespero.com
+          - dev.bridgespero.com
+          - meet.bridgespero.com
+        host: 10.0.50.36
+        port: 80

@@ -23,8 +23,8 @@
     network: "{{ _quadlet.network }}"
     ip: "{{ _quadlet.ip }}"
     mac_address: "{{ _quadlet.mac_address }}"
-    cpus: 2
-    memory: 1G
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
     quadlet_options:
       - "AutoUpdate=registry"
       - |
@@ -42,7 +42,7 @@
       WantedBy:
         - containers.target
 
-- name: "{{ ansible_role_name }}/angie: Copy angie etc"
+- name: "{{ ansible_role_name }}/angie: Copy etc"
   ansible.builtin.copy:
     src: etc/
     dest: "{{ _quadlet.mount_src[0] | dirname }}"

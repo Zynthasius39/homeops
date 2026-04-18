@@ -1,0 +1,18 @@
+---
+- name: "{{ ansible_role_name }}/loki"
+  ansible.builtin.include_tasks: "loki.yml"
+  vars:
+    quadlet_container_name: loki
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/loki-config.yaml' }}"
+    quadlet_cpus: 2
+    quadlet_memory: 512M
+
+- name: "{{ ansible_role_name }}/alloy"
+  ansible.builtin.include_tasks: "alloy.yml"
+  vars:
+    quadlet_container_name: alloy
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/config.alloy' }}"
+    quadlet_cpus: 2
+    quadlet_memory: 512M

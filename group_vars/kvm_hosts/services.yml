@@ -30,3 +30,13 @@ services:
           - meet.bridgespero.com
         host: 10.0.50.36
         port: 80
+  telemetry:
+    containers:
+      loki:
+        ip: 10.0.50.92
+        network: macv50
+        image: docker.io/grafana/loki:3.6.10
+      alloy:
+        image: docker.io/grafana/alloy:v1.15.1
+    config:
+      loki_uri: http://loki.servers.alak:3100

@@ -1,0 +1,46 @@
+---
+- name: "{{ ansible_role_name }}/loki: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+  loop: "{{ _quadlet.mount_src }}"
+
+- name: "{{ ansible_role_name }}/loki: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/etc/loki/local-config.yaml:Z"
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - containers.target
+    systemd_install:
+      WantedBy:
+        - containers.target
+
+- name: "{{ ansible_role_name }}/loki: Copy etc"
+  ansible.builtin.copy:
+    src: etc/loki-config.yml
+    dest: "{{ _quadlet.mount_src[0] | dirname }}"
+    mode: '0644'
+    directory_mode: '0755'

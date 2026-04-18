@@ -1,0 +1,68 @@
+discovery.relabel "journal" {
+	targets = []
+
+	rule {
+		source_labels = ["__journal__systemd_unit"]
+		target_label  = "unit"
+	}
+
+	rule {
+		source_labels = ["__journal__hostname"]
+		target_label  = "host"
+	}
+
+	rule {
+		source_labels = ["__journal_priority_keyword"]
+		target_label  = "level"
+	}
+
+	rule {
+		source_labels = ["__journal_syslog_identifier"]
+		target_label  = "syslog_identifier"
+	}
+}
+
+loki.source.journal "journal" {
+	max_age       = "12h0m0s"
+	path          = "/var/log/journal"
+	relabel_rules = discovery.relabel.journal.rules
+	forward_to    = [loki.write.default.receiver]
+	labels        = {
+		job = "systemd-journal",
+	}
+}
+
+loki.source.file "system" {
+	targets = [{
+		__address__ = "localhost",
+		__path__    = "/var/log/*log",
+		job         = "varlogs",
+	}]
+	forward_to = [loki.write.default.receiver]
+
+	file_match {
+		enabled = true
+	}
+	legacy_positions_file = "/tmp/positions.yaml"
+}
+
+loki.source.file "reverse-proxy" {
+	targets = [{
+		__address__ = "localhost",
+		__path__    = "/var/log/angie/*log",
+		job         = "varlogs",
+	}]
+	forward_to = [loki.write.default.receiver]
+
+	file_match {
+		enabled = true
+	}
+	legacy_positions_file = "/tmp/positions.yaml"
+}
+
+loki.write "default" {
+	endpoint {
+		url = "{{ config.loki_uri }}/loki/api/v1/push"
+	}
+	external_labels = {}
+}

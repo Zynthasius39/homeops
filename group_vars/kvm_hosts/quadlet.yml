@@ -2,7 +2,7 @@
 quadlet:
   owner: seal
   group: seal
-  data_dir: "{{ '/home/seal/data' }}"
+  data_dir: "{{ '/home/seal/containers' }}"
   env_dir: "{{ '/home/seal/env' }}"
   default_network: macv50
   dns_by_network:

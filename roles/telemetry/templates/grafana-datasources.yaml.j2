@@ -1,0 +1,40 @@
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: {{ config.loki_uri }}
+    jsonData:
+      timeout: 60
+      maxLines: 1000
+  - name: Tempo
+    type: tempo
+    access: proxy
+    orgId: 1
+    url: {{ config.tempo_uri }}
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: false
+    apiVersion: 1
+    uid: tempo
+    jsonData:
+      httpMethod: GET
+      serviceMap:
+        datasourceUid: prometheus
+      streamingEnabled:
+        search: true
+        metrics: true
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    orgId: 1
+    url: {{ config.prometheus_uri }}
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      httpMethod: GET

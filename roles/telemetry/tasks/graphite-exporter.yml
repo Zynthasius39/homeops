@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/loki: Create volume directories"
+- name: "{{ ansible_role_name }}/graphite-exporter: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
@@ -7,13 +7,14 @@
     group: "{{ _quadlet.group }}"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/loki: Generate quadlets"
+- name: "{{ ansible_role_name }}/graphite-exporter: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    command: --graphite.mapping-config=/tmp/truenas-mappings.yml
     volume:
-      - "{{ _quadlet.mount_src[0] }}:/etc/loki/local-config.yml:Z,ro"
+      - "{{ _quadlet.mount_src[0] }}:/tmp/truenas-mappings.yml:Z,ro"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -39,9 +40,9 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/loki: Copy etc"
+- name: "{{ ansible_role_name }}/graphite-exporter: Copy etc"
   ansible.builtin.copy:
-    src: etc/loki-config.yml
+    src: etc/truenas-mappings.yml
     dest: "{{ _quadlet.mount_src[0] | dirname }}"
     mode: '0644'
     directory_mode: '0755'

@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/loki: Create volume directories"
+- name: "{{ ansible_role_name }}/grafana: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
@@ -7,13 +7,21 @@
     group: "{{ _quadlet.group }}"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/loki: Generate quadlets"
+- name: "{{ ansible_role_name }}/grafana: Change volume permissions"
+  ansible.builtin.file:
+    path: "{{ _quadlet.mount_src[0] | dirname }}"
+    state: directory
+    owner: "472"
+    group: "0"
+
+- name: "{{ ansible_role_name }}/grafana: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
     volume:
-      - "{{ _quadlet.mount_src[0] }}:/etc/loki/local-config.yml:Z,ro"
+      - "{{ _quadlet.mount_src[0] }}:/var/lib/grafana:Z"
+      - "{{ _quadlet.mount_src[1] }}:/etc/grafana/provisioning/datasources/datasources.yaml:Z,ro"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -39,9 +47,10 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/loki: Copy etc"
-  ansible.builtin.copy:
-    src: etc/loki-config.yml
-    dest: "{{ _quadlet.mount_src[0] | dirname }}"
+- name: "{{ ansible_role_name }}/grafana: Render etc"
+  ansible.builtin.template:
+    src: grafana-datasources.yaml.j2
+    dest: "{{ _quadlet.mount_src[1] }}"
     mode: '0644'
-    directory_mode: '0755'
+  vars:
+    config: "{{ services[ansible_role_name].config }}"

@@ -1,10 +1,27 @@
 ---
+- name: "{{ ansible_role_name }}/systemd: telemetry target"
+  ansible.builtin.copy:
+    src: systemd/telemetry.target
+    dest: /etc/systemd/system
+    mode: '0644'
+  notify: "SystemD daemon reload"
+
 - name: "{{ ansible_role_name }}/loki"
   ansible.builtin.include_tasks: "loki.yml"
   vars:
     quadlet_container_name: loki
     quadlet_mount_src:
-      - "{{ _quadlet.data ~ '/loki-config.yaml' }}"
+      - "{{ _quadlet.data ~ '/loki-config.yml' }}"
+    quadlet_cpus: 2
+    quadlet_memory: 512M
+
+- name: "{{ ansible_role_name }}/grafana"
+  ansible.builtin.include_tasks: "grafana.yml"
+  vars:
+    quadlet_container_name: grafana
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/data/' }}"
+      - "{{ _quadlet.data ~ '/grafana-datasources.yaml' }}"
     quadlet_cpus: 2
     quadlet_memory: 512M
 
@@ -16,3 +33,47 @@
       - "{{ _quadlet.data ~ '/config.alloy' }}"
     quadlet_cpus: 2
     quadlet_memory: 512M
+
+- name: "{{ ansible_role_name }}/tempo"
+  ansible.builtin.include_tasks: "tempo.yml"
+  vars:
+    quadlet_container_name: tempo
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/tempo.yaml' }}"
+      - "{{ _quadlet.data ~ '/data/' }}"
+    quadlet_cpus: 2
+    quadlet_memory: 512M
+
+- name: "{{ ansible_role_name }}/prometheus"
+  ansible.builtin.include_tasks: "prometheus.yml"
+  vars:
+    quadlet_container_name: prometheus
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/prometheus.yaml' }}"
+    quadlet_cpus: 2
+    quadlet_memory: 512M
+
+- name: "{{ ansible_role_name }}/prometheus-podman-exporter"
+  ansible.builtin.include_tasks: "prometheus-podman-exporter.yml"
+  vars:
+    quadlet_container_name: prometheus-podman-exporter
+    quadlet_cpus: 1
+    quadlet_memory: 128M
+
+- name: "{{ ansible_role_name }}/graphite-exporter"
+  ansible.builtin.include_tasks: "graphite-exporter.yml"
+  vars:
+    quadlet_container_name: graphite-exporter
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/truenas-mappings.yml' }}"
+    quadlet_cpus: 1
+    quadlet_memory: 128M
+
+- name: "{{ ansible_role_name }}/uptime-kuma"
+  ansible.builtin.include_tasks: "uptime-kuma.yml"
+  vars:
+    quadlet_container_name: uptime-kuma
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/data/' }}"
+    quadlet_cpus: 1
+    quadlet_memory: 128M

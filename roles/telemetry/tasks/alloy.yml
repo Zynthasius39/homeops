@@ -13,7 +13,8 @@
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
     volume:
-      - "{{ _quadlet.mount_src[0] }}:/etc/alloy/config.alloy:Z"
+      - "{{ _quadlet.mount_src[0] }}:/etc/alloy/config.alloy:Z,ro"
+      - "/:/host:ro,rslave"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -33,10 +34,11 @@
       Restart: always
     systemd_unit:
       After:
-        - containers.target
+        - telemetry.target
     systemd_install:
       WantedBy:
-        - containers.target
+        - telemetry.target
+  notify: "SystemD daemon reload"
 
 - name: "{{ ansible_role_name }}/alloy: Render etc"
   ansible.builtin.template:

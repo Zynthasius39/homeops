@@ -1,3 +1,18 @@
+prometheus.exporter.unix "{{ inventory_hostname }}" {
+  rootfs_path = "/host"
+}
+
+prometheus.scrape "{{ inventory_hostname }}" {
+  targets    = prometheus.exporter.unix.jellybean.targets
+  forward_to = [prometheus.remote_write.jellybean.receiver]
+}
+
+prometheus.remote_write "{{ inventory_hostname }}" {
+  endpoint {
+    url = "{{ config.prometheus_uri }}/api/v1/write"
+  }
+}
+
 discovery.relabel "journal" {
 	targets = []
 
@@ -46,7 +61,8 @@ loki.source.file "system" {
 	legacy_positions_file = "/tmp/positions.yaml"
 }
 
-loki.source.file "reverse-proxy" {
+{% if inventory_hostname in groups['kvm_hosts'] %}
+loki.source.file "reverse_proxy" {
 	targets = [{
 		__address__ = "localhost",
 		__path__    = "/var/log/angie/*log",
@@ -59,6 +75,7 @@ loki.source.file "reverse-proxy" {
 	}
 	legacy_positions_file = "/tmp/positions.yaml"
 }
+{% endif %}
 
 loki.write "default" {
 	endpoint {

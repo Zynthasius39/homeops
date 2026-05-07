@@ -1,0 +1,22 @@
+#cloud-config
+hostname: ${hostname}
+create_hostname_file: true
+
+allow_public_ssh_keys: true
+disable_root: true
+disable_root_opts: no-port-forwarding,no-agent-forwarding,no-X11-forwarding
+ssh_deletekeys: true
+ssh_genkeytypes:
+  - rsa
+  - ecdsa
+  - ed25519
+ssh_publish_hostkeys:
+  blacklist:
+    - rsa
+  enabled: true
+ssh_quiet_keygen: true
+
+users:
+  - name: default
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys: ${jsonencode(ssh_pub_key)}

@@ -1,0 +1,62 @@
+---
+- ansible.builtin.slurp:
+    src: "{{ kubeconfig_path }}"
+  register: _kubeconfig_raw
+
+- ansible.builtin.set_fact:
+    _kubeconfig: "{{ _kubeconfig_raw.content | b64decode | from_yaml }}"
+
+- ansible.builtin.set_fact:
+    _kube_user: >-
+      {{
+        _kubeconfig.users
+        | selectattr('name', 'equalto', _kubeconfig.contexts
+          | selectattr('name', 'equalto', _kubeconfig['current-context'])
+          | map(attribute='context.user') | first)
+        | map(attribute='user') | first
+      }}
+
+- ansible.builtin.tempfile:
+    suffix: ".crt"
+  register: _tmp_cert
+
+- ansible.builtin.tempfile:
+    suffix: ".key"
+  register: _tmp_key
+
+- ansible.builtin.copy:
+    content: "{{ _kube_user['client-certificate-data'] | b64decode }}"
+    dest: "{{ _tmp_cert.path }}"
+    mode: "0600"
+
+- ansible.builtin.copy:
+    content: "{{ _kube_user['client-key-data'] | b64decode }}"
+    dest: "{{ _tmp_key.path }}"
+    mode: "0600"
+
+- name: "Wait for kube-apiserver /readyz to return ok"
+  ansible.builtin.uri:
+    url: "{{ kubeapi_readyz_url }}"
+    method: GET
+    validate_certs: false
+    return_content: true
+    timeout: "{{ kubeapi_wait_connect_timeout }}"
+    status_code: 200
+    client_cert: "{{ _tmp_cert.path }}"
+    client_key: "{{ _tmp_key.path }}"
+  register: _kubeapi_readyz
+  until: >
+    _kubeapi_readyz.status == 200 and
+    _kubeapi_readyz.content is search('ok')
+  retries: "{{ (kubeapi_wait_timeout / kubeapi_wait_delay) | int }}"
+  delay: "{{ kubeapi_wait_delay }}"
+  changed_when: false
+  failed_when: >
+    _kubeapi_readyz is failed and
+    _kubeapi_readyz.attempts | default(0) >= (kubeapi_wait_timeout / kubeapi_wait_delay) | int
+
+- name: "kubeapi /readyz is healthy"
+  ansible.builtin.debug:
+    msg: >
+      kube-apiserver is ready after {{ _kubeapi_readyz.attempts | default(1) }}
+      attempt(s) – response: {{ _kubeapi_readyz.content | trim }}

@@ -1,0 +1,12 @@
+network:
+  version: 2
+  ethernets:
+    eth0:
+      match:
+        macaddress: ${mac}
+      dhcp4: false
+      addresses: ${jsonencode(ip)}
+      gateway4: ${gateway}
+      nameservers:
+        search: ${jsonencode(search)}
+        addresses: ${jsonencode(dns_servers)}

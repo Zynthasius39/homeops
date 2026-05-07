@@ -1,0 +1,9 @@
+---
+# Cilium Helm chart registry
+cilium_chart_registry: oci://quay.io/cilium/charts/cilium
+
+# Cilium Helm chart version
+cilium_chart_version: 1.19.3
+
+# Path to the kubeconfig; falls back to in-cluster if empty
+kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default(hostvars[groups['server'][0]]['kubeconfig'], true) | default('~/.kube/config') }}"

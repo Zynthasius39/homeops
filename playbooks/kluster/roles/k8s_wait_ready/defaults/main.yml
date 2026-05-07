@@ -1,0 +1,11 @@
+---
+# URL of the /readyz endpoint
+kubeapi_readyz_url: "https://{{ hostvars[groups['server'][0]]['ansible_host'] }}:6443/readyz"
+
+# Path to the kubeconfig; falls back to in-cluster if empty
+kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default(hostvars[groups['server'][0]]['kubeconfig'], true) | default('~/.kube/config') }}"
+
+# Polling settings
+kubeapi_wait_timeout: 300              # total seconds to wait
+kubeapi_wait_delay: 10                 # seconds between retries
+kubeapi_wait_connect_timeout: 5        # TCP connect timeout per attempt

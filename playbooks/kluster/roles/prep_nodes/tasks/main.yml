@@ -1,0 +1,20 @@
+---
+- name: Install Dependent RHEL 10 Package
+  when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == "10"
+  ansible.builtin.dnf:
+    name: kernel-modules-extra   # Load br_netfilter module
+    update_cache: "{{ airgap_dir is not defined }}"
+
+- name: Load br_netfilter
+  community.general.modprobe:
+    name: br_netfilter
+    state: present
+  register: module_load
+  ignore_errors: yes
+  when: (ansible_facts['os_family'] == 'RedHat' or ansible_facts['distribution'] == 'Archlinux')
+
+- name: Reboot if module missing or kernel updated
+  ansible.builtin.reboot:
+    msg: "Rebooting to initialize after kernel upgrade"
+    reboot_timeout: 300
+  when: module_load.failed

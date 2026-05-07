@@ -1,4 +1,10 @@
 ---
+- name: Prepare nodes for cluster deployment
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - prep_nodes
+
 - name: Deploy a k3s cluster
   ansible.builtin.import_playbook: k3s.orchestration.site
 

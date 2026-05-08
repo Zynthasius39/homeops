@@ -1,74 +1,26 @@
-variable "nodes" {
-  type = map(object({
-    ip     = string
-    mac    = string
-    memory = number
-    vcpu   = number
-  }))
-}
-
-variable "private_key" { type = string }
-variable "public_key"  { type = string }
-variable "libvirt_uri" { type = string }
-
-variable "storage" {
-  type = object({
-    image_path = string
-    image_pool = string
-  })
-}
-
-variable "network" {
-  type = object({
-    gateway         = string
-    libvirt_network = string
-    search          = list(string)
-    dns_servers     = list(string)
-  })
-}
-
-terraform {
-  required_version = "~> 1.0"
-  required_providers {
-    tls = {
-      source  = "hashicorp/tls"
-      version = "~> 4.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-    libvirt = {
-      source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
-    }
-  }
-}
-
-provider "libvirt" {
-  uri = var.libvirt_uri
-}
-
-resource "tls_private_key" "node" {
+resource "tls_private_key" "cluster" {
+  for_each  = toset([for vm in local.flat_vms : vm.group])
   algorithm = "ED25519"
 }
 
 resource "local_file" "private_key" {
-  filename        = pathexpand(var.private_key)
-  content         = tls_private_key.node.private_key_pem
+  for_each        = tls_private_key.cluster
+  content         = each.value.private_key_pem
+  filename        = pathexpand([for vm in local.flat_vms : vm.private_key if vm.group == each.key][0])
   file_permission = "0600"
 }
 
 resource "local_file" "public_key" {
-  filename = pathexpand(var.public_key)
-  content  = tls_private_key.node.public_key_openssh
+  for_each = tls_private_key.cluster
+  content  = each.value.public_key_openssh
+  filename = pathexpand([for vm in local.flat_vms : vm.public_key if vm.group == each.key][0])
 }
 
-resource "libvirt_volume" "node" {
-  for_each = var.nodes
+resource "libvirt_volume" "vm" {
+  for_each = local.flat_vms
   name     = "${each.key}.qcow2"
-  pool     = var.storage.image_pool
-  capacity = 10737418240  # 10GB
+  pool     = each.value.storage.pool
+  capacity = each.value.storage.capacity
   target = {
     format = {
       type = "qcow2"
@@ -76,15 +28,15 @@ resource "libvirt_volume" "node" {
   }
 
   backing_store = {
-    path   = pathexpand(var.storage.image_path)
+    path   = pathexpand(var.cloud_images[each.value.os])
     format = {
       type = "qcow2"
     }
   }
 }
 
-resource "libvirt_cloudinit_disk" "init" {
-  for_each = var.nodes
+resource "libvirt_cloudinit_disk" "vm" {
+  for_each = local.flat_vms
   name     = "${each.key}-init"
 
   meta_data = yamlencode({
@@ -92,34 +44,34 @@ resource "libvirt_cloudinit_disk" "init" {
     local-hostname = each.key
   })
 
-  user_data = templatefile("${path.module}/cloud-init.tftpl", {
+  user_data = templatefile("${path.module}/templates/cloud-init.tftpl", {
     hostname    = each.key
-    ssh_pub_key = [tls_private_key.node.public_key_openssh]
+    ssh_pub_key = [tls_private_key.cluster[each.value.group].public_key_openssh]
   })
 
-  network_config = templatefile("${path.module}/network-config.tftpl", {
+  network_config = templatefile("${path.module}/templates/network-config.tftpl", {
     ip          = [each.value.ip]
     mac         = each.value.mac
-    gateway     = var.network.gateway
-    search      = var.network.search
-    dns_servers = var.network.dns_servers
+    gateway     = each.value.network.gateway
+    search      = each.value.network.search
+    dns_servers = each.value.network.dns_servers
   })
 }
 
 resource "libvirt_volume" "cloudinit" {
-  for_each = var.nodes
+  for_each = local.flat_vms
   name     = "${each.key}-cloudinit.iso"
   pool     = "cloudinit"
 
   create = {
     content = {
-      url = libvirt_cloudinit_disk.init[each.key].path
+      url = libvirt_cloudinit_disk.vm[each.key].path
     }
   }
 }
 
 resource "libvirt_domain" "node" {
-  for_each    = var.nodes
+  for_each    = local.flat_vms
   name		    = each.key
   memory	    = each.value.memory
   memory_unit = "MiB"
@@ -173,7 +125,7 @@ resource "libvirt_domain" "node" {
         }
         source = {
           file = {
-            file = libvirt_volume.node[each.key].path
+            file = libvirt_volume.vm[each.key].path
           }
         }
         target = {
@@ -207,7 +159,7 @@ resource "libvirt_domain" "node" {
         }
         source = {
           network = {
-            network = var.network.libvirt_network
+            network = each.value.network.libvirt_network
           }
         }
       }

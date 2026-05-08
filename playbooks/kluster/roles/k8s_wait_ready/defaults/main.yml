@@ -3,7 +3,7 @@
 kubeapi_readyz_url: "https://{{ hostvars[groups['server'][0]]['ansible_host'] }}:6443/readyz"
 
 # Path to the kubeconfig; falls back to in-cluster if empty
-kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default(hostvars[groups['server'][0]]['kubeconfig'], true) | default('~/.kube/config') }}"
+kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default(hostvars[groups['server'][0]]['kubeconfig'], true) | default('~/.kube/config') }}"
 
 # Polling settings
 kubeapi_wait_timeout: 300              # total seconds to wait

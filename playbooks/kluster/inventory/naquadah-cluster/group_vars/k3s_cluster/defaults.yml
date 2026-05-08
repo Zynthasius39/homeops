@@ -9,13 +9,12 @@ _config:
         - "{{ api_endpoint }}"
       disable:
         - traefik
+        - servicelb
       cluster-cidr: "{{ k3s_cluster_cidr }}"
       service-cidr: "{{ k3s_service_cidr }}"
     cilium:
       disable-kube-proxy: true
       disable-network-policy: true
-      disable:
-        - servicelb
       flannel-backend:
         - none
       node-taint:

@@ -1,6 +1,6 @@
 ---
 - ansible.builtin.slurp:
-    src: "{{ kubeconfig_path }}"
+    src: "{{ kubeconfig }}"
   register: _kubeconfig_raw
 
 - ansible.builtin.set_fact:

@@ -6,4 +6,4 @@ cilium_chart_registry: oci://quay.io/cilium/charts/cilium
 cilium_chart_version: 1.19.3
 
 # Path to the kubeconfig; falls back to in-cluster if empty
-kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') | default(hostvars[groups['server'][0]]['kubeconfig'], true) | default('~/.kube/config') }}"
+kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default(hostvars[groups['server'][0]]['kubeconfig'], true) | default('~/.kube/config') }}"

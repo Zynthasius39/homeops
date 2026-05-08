@@ -3,12 +3,12 @@
   hosts: k3s_cluster
   become: true
   roles:
-    - prep_nodes
+    - k3s_prep
+  tags:
+    - k3s_prep
 
 - name: Deploy a k3s cluster
   ansible.builtin.import_playbook: k3s.orchestration.site
-
-# - hosts: k3s_cluster
 
 - name: Install addons to the cluster
   hosts: localhost
@@ -16,4 +16,6 @@
   tasks:
   roles:
     - k8s_wait_ready
-    - k8s_addons
+    - k3s_addons
+  tags:
+    - k3s_addons

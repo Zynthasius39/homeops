@@ -1,6 +1,6 @@
 api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
-server_config_yaml: "{{ _config.server.default | combine(_config.server.cilium if enable_cilium else {}, recursive=True) }}"
-agent_config_yaml: "{{ _config.agent.default | combine(_config.agent.cilium if enable_cilium else {}, recursive=True) }}"
+server_config_yaml: "{{ _config.server.default | combine(_config.server.cilium if enable_cilium else {}, recursive=True) | combine({'selinux': true} if ansible_selinux else {}, recursive=True) }}"
+agent_config_yaml: "{{ _config.agent.default | combine(_config.agent.cilium if enable_cilium else {}, recursive=True) | combine({'selinux': true} if ansible_selinux else {}, recursive=True) }}"
 
 _config:
   server:

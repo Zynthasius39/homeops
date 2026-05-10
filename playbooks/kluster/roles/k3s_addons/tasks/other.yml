@@ -1,0 +1,8 @@
+---
+- name: Apply Cilium related manifests - CiliumLoadBalancerIPPool
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', item) | from_yaml }}"
+    kubeconfig: "{{ kubeconfig }}"
+  loop:
+    - "lb-ip-pool.yaml"

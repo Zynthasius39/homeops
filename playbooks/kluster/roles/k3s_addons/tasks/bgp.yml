@@ -1,0 +1,11 @@
+---
+- name: Apply Cilium related manifests - CiliumBGP
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', item) | from_yaml }}"
+    kubeconfig: "{{ kubeconfig }}"
+  loop:
+    - "bgp-advertisements.yaml"
+    # - "bgp-opnsense-secret.yaml"
+    - "bgp-opnsense-peer.yaml"
+    - "bgp-cluster-config.yaml"

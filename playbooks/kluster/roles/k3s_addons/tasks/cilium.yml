@@ -1,0 +1,49 @@
+---
+- name: Deploy Cilium via Helm
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: "{{ cilium_chart_registry }}"
+    release_namespace: "{{ cilium_namespace }}"
+    chart_version: "{{ cilium_chart_version }}"
+    kubeconfig: "{{ kubeconfig }}"
+    values: "{{ cilium_config }}"
+  register: cilium_install
+
+- name: Wait for Cilium to be ready
+  ansible.builtin.command: cilium status --wait --wait-duration 120s
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
+  register: cilium_status
+  retries: 5
+  delay: 10
+  until: cilium_status.rc == 0
+  changed_when: false
+  when: cilium_install.changed
+
+- name: Restart Cilium operator
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: Deployment
+    name: cilium-operator
+    namespace: kube-system
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+  when: cilium_install.changed
+
+- name: Restart Cilium agents
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: cilium
+    namespace: kube-system
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+  when: cilium_install.changed

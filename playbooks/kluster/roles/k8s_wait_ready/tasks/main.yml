@@ -19,20 +19,24 @@
 - ansible.builtin.tempfile:
     suffix: ".crt"
   register: _tmp_cert
+  changed_when: false
 
 - ansible.builtin.tempfile:
     suffix: ".key"
   register: _tmp_key
+  changed_when: false
 
 - ansible.builtin.copy:
     content: "{{ _kube_user['client-certificate-data'] | b64decode }}"
     dest: "{{ _tmp_cert.path }}"
     mode: "0600"
+  changed_when: false
 
 - ansible.builtin.copy:
     content: "{{ _kube_user['client-key-data'] | b64decode }}"
     dest: "{{ _tmp_key.path }}"
     mode: "0600"
+  changed_when: false
 
 - name: "Wait for kube-apiserver /readyz to return ok"
   ansible.builtin.uri:

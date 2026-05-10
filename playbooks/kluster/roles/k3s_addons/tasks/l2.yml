@@ -1,0 +1,8 @@
+---
+- name: Apply Cilium related manifests - CiliumL2AnnouncementPolicy
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', item) | from_yaml }}"
+    kubeconfig: "{{ kubeconfig }}"
+  loop:
+    - "l2-announcement-policy.yaml"

@@ -3,7 +3,6 @@ apiVersion: cilium.io/v2
 kind: CiliumBGPPeerConfig
 metadata:
   name: opnsense-peer
-  namespace: {{ cilium_namespace }}
 spec:
   timers:
     holdTimeSeconds: 9
@@ -17,4 +16,4 @@ spec:
       safi: unicast
       advertisements:
         matchLabels:
-          advertise: "bgp"
+          advertise: bgp

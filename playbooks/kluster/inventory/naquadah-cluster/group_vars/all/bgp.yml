@@ -1,4 +1,4 @@
-# bgp_opnsense_address: 10.0.16.1
+bgp_opnsense_address: 10.0.16.1
 bgp_opnsense_asn: 65551
 bgp_opnsense_password: !vault |
   $ANSIBLE_VAULT;1.1;AES256

@@ -3,7 +3,6 @@ apiVersion: "cilium.io/v2alpha1"
 kind: CiliumL2AnnouncementPolicy
 metadata:
   name: l2-announcement-policy
-  namespace: {{ cilium_namespace }}
 spec:
   externalIPs: true
   loadBalancerIPs: true

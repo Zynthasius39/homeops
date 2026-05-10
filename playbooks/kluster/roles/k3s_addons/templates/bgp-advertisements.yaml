@@ -3,7 +3,6 @@ apiVersion: cilium.io/v2
 kind: CiliumBGPAdvertisement
 metadata:
   name: bgp-advertisements
-  namespace: {{ cilium_namespace }}
   labels:
     advertise: bgp
 spec:
@@ -11,6 +10,8 @@ spec:
     - advertisementType: Service
       service:
         addresses:
-          - ClusterIP
           - ExternalIP
           - LoadBalancerIP
+      selector:
+        matchLabels:
+          advertise: bgp

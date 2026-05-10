@@ -3,7 +3,6 @@ apiVersion: cilium.io/v2
 kind: CiliumBGPClusterConfig
 metadata:
   name: cilium-bgp
-  namespace: {{ cilium_namespace }}
 spec:
   bgpInstances:
   - name: instance-65101
@@ -12,9 +11,6 @@ spec:
     peers:
     - name: peer-65551-opnsense
       peerASN: {{ bgp_opnsense_asn }}
-      autoDiscovery:
-        mode: DefaultGateway
-        defaultGateway:
-          addressFamily: ipv4
+      peerAddress: {{ bgp_opnsense_address }}
       peerConfigRef:
         name: opnsense-peer

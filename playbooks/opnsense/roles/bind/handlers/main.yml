@@ -1,0 +1,11 @@
+---
+- name: reload bind
+  command: /usr/local/sbin/configctl bind reload
+
+- name: wait bind
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 53
+    state: started
+    delay: 2
+    timeout: 15

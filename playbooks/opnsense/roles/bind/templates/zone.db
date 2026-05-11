@@ -1,0 +1,18 @@
+$ORIGIN {{ zone.name }}.
+$TTL 86400
+@   IN  SOA  {{ zone.ns_primary }}. {{ zone.admin_email }}. (
+             {{ ansible_facts.date_time.epoch }} ; serial
+             21600 ; refresh (6 hours)
+             3600 ; retry (1 hour)
+             3542400 ; expire (5 weeks 6 days)
+             3600 ; minimum (1 hour)
+             )
+    IN  NS   {{ zone.ns_primary }}.
+{{ zone.ns_primary }}. IN  A  {{ zone.ns_ip }}
+
+$TTL 3600
+{% if zone.records is defined %}
+  {% for r in zone.records %}
+{% if r.name is defined %}{{ r.name }}{% endif %}    IN  {{ r.type }}  {{ r.address }}
+  {% endfor %}
+{% endif %}

@@ -1,0 +1,21 @@
+---
+- block:
+    - name: "Deploy zone configurations"
+      ansible.builtin.template:
+        src: zone.conf
+        dest: "/usr/local/etc/namedb/named.conf.d/{{ zone.name }}.conf"
+      loop: "{{ dns_zones }}"
+      loop_control:
+        loop_var: zone
+
+    - name: "Deploy zone database files"
+      ansible.builtin.template:
+        src: zone.db
+        dest: "/usr/local/etc/namedb/primary/db-{{ zone.name }}"
+        force: no
+      loop: "{{ dns_zones }}"
+      loop_control:
+        loop_var: zone
+  notify:
+    - reload bind
+    - wait bind

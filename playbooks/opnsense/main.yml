@@ -1,0 +1,7 @@
+---
+- name: Provision OPNsense
+  hosts: firewalls
+  roles:
+    - bind
+  tags:
+    - dns

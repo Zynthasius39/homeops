@@ -1,9 +1,4 @@
-dns_zones:
+zones:
   - name: home.alak
-    ns_ip: "{{ ansible_host }}"
-    ns_primary: ns1.home.alak
-    admin_email: admin.home.alak
   - name: servers.alak
-    ns_ip: "{{ ansible_host }}"
-    ns_primary: ns1.servers.alak
-    admin_email: admin.servers.alak
+  - name: naquadah.alak

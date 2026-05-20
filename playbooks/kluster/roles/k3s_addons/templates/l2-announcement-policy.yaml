@@ -4,5 +4,8 @@ kind: CiliumL2AnnouncementPolicy
 metadata:
   name: l2-announcement-policy
 spec:
+  serviceSelector:
+    matchLabels:
+      advertiseL2: "true"
   externalIPs: true
   loadBalancerIPs: true

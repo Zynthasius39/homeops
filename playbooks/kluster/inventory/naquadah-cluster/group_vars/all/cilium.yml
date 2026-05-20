@@ -3,6 +3,6 @@ cilium_host_firewall: true
 cilium_k8s_client_rate_limit:
   burst: 64
   qps: 32
-cilium_l2_announcements_enabled: false
+cilium_l2_announcements_enabled: true
 cilium_bgp_enabled: true
 cilium_gateway_api_enabled: true

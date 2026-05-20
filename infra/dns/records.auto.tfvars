@@ -3,26 +3,61 @@ records = [
 # --------------------------------
 # home.alak
 # --------------------------------
-  {
-    zone   = "home.alak."
-    type   = "A"
-    values = ["10.0.50.23"]
-  },
-  {
-    zone   = "home.alak."
-    name   = "angie"
-    type   = "CNAME"
-    values = ["home.alak."]
-  },
+{
+  zone   = "home.alak."
+  type   = "A"
+  values = ["10.0.50.23"]
+},
+{
+  zone   = "home.alak."
+  name   = "angie"
+  type   = "CNAME"
+  values = ["home.alak."]
+},
+{
+  zone   = "home.alak."
+  name   = "whoami.dost"
+  type   = "CNAME"
+  values = ["home.alak."]
+},
 
 # --------------------------------
 # servers.alak
 # --------------------------------
-  {
-    zone   = "servers.alak."
-    name   = "nextcloud"
-    type   = "A"
-    values = ["10.0.50.24"]
-  },
+{
+  zone   = "servers.alak."
+  name   = "nextcloud"
+  type   = "A"
+  values = ["10.0.50.24"]
+},
+{
+  zone   = "servers.alak."
+  name   = "jellyfin"
+  type   = "A"
+  values = ["10.0.50.41"]
+},
+{
+  zone   = "servers.alak."
+  name   = "jellyseerr"
+  type   = "A"
+  values = ["10.0.50.42"]
+},
+{
+  zone   = "servers.alak."
+  name   = "deluge"
+  type   = "A"
+  values = ["10.0.50.48"]
+},
+
+# --------------------------------
+# naquadah.alak
+# --------------------------------
+
+{
+  zone   = "naquadah.alak."
+  name   = "app.dost"
+  type   = "A"
+  values = ["10.0.20.1"]
+},
 
 ]

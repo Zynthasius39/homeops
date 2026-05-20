@@ -1,0 +1,6 @@
+# Environment file
+.env
+
+# Terraform files containing sensitive data
+dns.tf
+tunnel.tf

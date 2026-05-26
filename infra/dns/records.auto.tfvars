@@ -55,9 +55,20 @@ records = [
 
 {
   zone   = "naquadah.alak."
-  name   = "app.dost"
   type   = "A"
   values = ["10.0.20.1"]
+},
+{
+  zone   = "naquadah.alak."
+  name   = "gopher"
+  type   = "CNAME"
+  values = ["naquadah.alak."]
+},
+{
+  zone   = "naquadah.alak."
+  name   = "dev.gopher"
+  type   = "CNAME"
+  values = ["naquadah.alak."]
 },
 
 ]

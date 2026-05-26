@@ -3,6 +3,7 @@
   kubernetes.core.k8s:
     src: "{{ item }}"
     state: present
+    kubeconfig: "{{ kubeconfig }}"
   loop:
     - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
     - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_gateways.yaml

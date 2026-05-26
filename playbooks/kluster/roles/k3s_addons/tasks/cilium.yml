@@ -6,8 +6,42 @@
     release_namespace: "{{ cilium_namespace }}"
     chart_version: "{{ cilium_chart_version }}"
     kubeconfig: "{{ kubeconfig }}"
-    values: "{{ cilium_config }}"
+    values: "{{ cilium_config | from_yaml }}"
   register: cilium_install
+
+- name: Restart Cilium operator
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: Deployment
+    name: cilium-operator
+    namespace: kube-system
+    kubeconfig: "{{ kubeconfig }}"
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+  when:
+    - cilium_install.changed
+    - cilium_install.status.revision | int > 1
+
+- name: Restart Cilium agents
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: DaemonSet
+    name: cilium
+    namespace: kube-system
+    kubeconfig: "{{ kubeconfig }}"
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+  when:
+    - cilium_install.changed
+    - cilium_install.status.revision | int > 1
 
 - name: Wait for Cilium to be ready
   ansible.builtin.command: cilium status --wait --wait-duration 120s
@@ -18,32 +52,4 @@
   delay: 10
   until: cilium_status.rc == 0
   changed_when: false
-  when: cilium_install.changed
-
-- name: Restart Cilium operator
-  kubernetes.core.k8s:
-    api_version: apps/v1
-    kind: Deployment
-    name: cilium-operator
-    namespace: kube-system
-    definition:
-      spec:
-        template:
-          metadata:
-            annotations:
-              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
-  when: cilium_install.changed
-
-- name: Restart Cilium agents
-  kubernetes.core.k8s:
-    api_version: apps/v1
-    kind: DaemonSet
-    name: cilium
-    namespace: kube-system
-    definition:
-      spec:
-        template:
-          metadata:
-            annotations:
-              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
   when: cilium_install.changed

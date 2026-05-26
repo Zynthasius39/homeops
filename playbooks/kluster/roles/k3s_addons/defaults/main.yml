@@ -9,25 +9,30 @@ cilium_chart_version: 1.19.3
 cilium_namespace: kube-system
 
 # Cilium Helm values
-cilium_config:
+cilium_config: |
   autoDirectNodeRoutes: true
   bgpControlPlane:
-    enabled: "{{ cilium_bgp_enabled }}"
+    enabled: {{ cilium_bgp_enabled }}
   gatewayAPI:
-    enabled: "{{ cilium_gateway_api_enabled }}"
+    enabled: {{ cilium_gateway_api_enabled }}
   hostFirewall:
-    enabled: "{{ cilium_host_firewall }}"
+    enabled: {{ cilium_host_firewall }}
+  {% if cilium_ingress_enabled %}
+  ingressController:
+    enabled: true
+    loadbalancerMode: dedicated
+  {% endif %}
   ipam:
     mode: kubernetes
-  ipv4NativeRoutingCIDR: "{{ k3s_cluster_cidr }}"
+  ipv4NativeRoutingCIDR: {{ k3s_cluster_cidr }}
   k8sClientRateLimit:
-    burst: "{{ cilium_k8s_client_rate_limit.burst }}"
-    qps: "{{ cilium_k8s_client_rate_limit.qps }}"
+    burst: {{ cilium_k8s_client_rate_limit.burst }}
+    qps: {{ cilium_k8s_client_rate_limit.qps }}
   kubeProxyReplacement: "true"
-  k8sServiceHost: "{{ api_endpoint }}"
+  k8sServiceHost: {{ api_endpoint }}
   k8sServicePort: "6443"
   l2announcements:
-    enabled: "{{ cilium_l2_announcements_enabled }}"
+    enabled: {{ cilium_l2_announcements_enabled }}
   routingMode: native
   securityContext:
     capabilities:

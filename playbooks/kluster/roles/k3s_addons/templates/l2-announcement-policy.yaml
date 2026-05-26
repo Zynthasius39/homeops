@@ -6,6 +6,6 @@ metadata:
 spec:
   serviceSelector:
     matchLabels:
-      advertiseL2: "true"
+      service.kubernetes.io/advertise-l2: "true"
   externalIPs: true
   loadBalancerIPs: true

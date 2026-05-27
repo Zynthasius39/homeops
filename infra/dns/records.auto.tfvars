@@ -20,6 +20,18 @@ records = [
   type   = "CNAME"
   values = ["home.alak."]
 },
+{
+  zone   = "home.alak."
+  name   = "status"
+  type   = "CNAME"
+  values = ["home.alak."]
+},
+{
+  zone   = "home.alak."
+  name   = "ca"
+  type   = "A"
+  values = ["10.0.50.100"]
+},
 
 # --------------------------------
 # servers.alak

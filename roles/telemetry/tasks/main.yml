@@ -76,4 +76,4 @@
     quadlet_mount_src:
       - "{{ _quadlet.data ~ '/data/' }}"
     quadlet_cpus: 1
-    quadlet_memory: 128M
+    quadlet_memory: 512M

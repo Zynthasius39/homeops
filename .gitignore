@@ -1,0 +1,3 @@
+playbooks/monolit/.vault_pass.gpg
+playbooks/monolit/.vault_pass_client.sh
+.vault_pass*

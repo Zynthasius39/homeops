@@ -1,0 +1,43 @@
+---
+- name: "{{ task }} : Load variables"
+  include_vars: "{{ task }}"
+
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src }}"
+  vars:
+    container_name: collabora-code
+
+- name: "{{ task }} : Generate quadlet"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    volume:
+      - "{{ mount_src[0] }}:/etc/coolwsd/coolwsd.xml:Z"
+    image: "{{ container_image }}"
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: collabora-code
+    unit_wantedby:
+      - containers.target
+    unit_after:
+      - containers.target

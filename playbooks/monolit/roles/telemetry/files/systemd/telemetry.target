@@ -1,0 +1,8 @@
+[Unit]
+Description=Target to all logging services
+Requires=multi-user.target
+After=multi-user.target
+PartOf=containers.target
+
+[Install]
+WantedBy=containers.target

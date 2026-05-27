@@ -1,0 +1,120 @@
+---
+- name: "{{ task }} : Load variables"
+  include_vars: "{{ task }}"
+
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src }}"
+  vars:
+    container_name: hpage
+
+- name: "{{ task }} : Generate quadlets [prod/demo]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: >-
+      {{
+        ([env_dir ~ '/' ~ 'hpage-api-prod.env'] if item == 'demo' else []) +
+        [container_env]
+      }}
+    volume:
+      - "{{ mount_src[0] }}:/hpage/shared:z"
+    image: localhost/zynthasius/beusproxy:alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 4
+    memory: 2G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  loop:
+    - prod
+    - demo
+  vars:
+    container_name: "hpage-api-{{ item }}"
+    unit_wantedby:
+      - hpage-stack.target
+    unit_after:
+      - hpage-stack.target
+
+- name: "{{ task }} : Generate quadlets [bot]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: "{{ container_env }}"
+    volume:
+      - "{{ mount_src[0] }}:/hpage/shared:z"
+      - "{{ mount_src[1] }}:/hpage/log:z"
+    image: localhost/zynthasius/beusproxy:bot-alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 4
+    memory: 2G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: hpage-bot
+    container_env: "{{ env_dir }}/hpage-api-prod.env"
+    unit_wantedby:
+      - hpage-stack.target
+    unit_after:
+      - hpage-stack.target
+      - hpage-web.service
+    unit_requires:
+      - hpage-web.service
+
+- name: "{{ task }} : Generate quadlets [web]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    image: localhost/zynthasius/beusp:alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 4
+    memory: 2G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: hpage-web
+    unit_wantedby:
+      - hpage-stack.target
+    unit_after:
+      - hpage-stack.target
+      - hpage-api-prod.service
+      - hpage-api-demo.service
+    unit_requires:
+      - hpage-api-prod.service
+      - hpage-api-demo.service

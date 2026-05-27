@@ -1,0 +1,45 @@
+---
+- become: true
+  block:
+    - name: Create container directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ quadlet.owner }}"
+        group: "{{ quadlet.group }}"
+      loop:
+        - "{{ quadlet.env_dir }}"
+        - "{{ quadlet.data_dir }}"
+
+    - ansible.builtin.include_tasks: "{{ task }}.yml"
+      loop:
+        - authentik
+        # - cloudflared.yml
+        # - collabora-code.yml
+        # - cowrie.yml
+        # - hpage.yml
+        # - kuma.yml
+        # - minecraft.yml
+        # - goaccess-npm.yml
+        # - sky-wings.yml
+        # - sws.yml
+        # - wikijs.yml
+        # - wordpress.yml
+      loop_control:
+        loop_var: task
+
+    # - name: Generate environment files
+    #   ansible.builtin.template:
+    #     src: env.j2
+    #     dest: "{{ env_dir ~ '/' ~ item.key ~ '.env' }}"
+    #     owner: "{{ owner }}"
+    #     group: "{{ group }}"
+    #     mode: "0600"
+    #   loop: "{{ container.env | dict2items }}"
+    #
+    - name: Chown  # XXX: Testing!
+      ansible.builtin.file:
+        owner: zynf
+        group: zynf
+        recurse: true
+        path: out

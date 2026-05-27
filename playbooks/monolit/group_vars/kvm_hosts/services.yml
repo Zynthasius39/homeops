@@ -1,0 +1,81 @@
+---
+services:
+  reverse-proxy:
+    containers:
+      angie:
+        ip: 10.0.50.23
+        network: macv50
+        image: docker.angie.software/angie:1.11.4-minimal
+    proxy_hosts:
+      - hostname: wiki.alakx.com
+        host: 10.0.50.28
+        port: 3000
+        include: ['cloudflare']
+      - hostname: grafana.alakx.com
+        host: 10.0.50.91
+        port: 3000
+        include: ['cloudflare']
+      - hostname:
+          - status.alakx.com
+          - status.home.alak
+        host: 10.0.50.95
+        port: 3001
+        include: ['cloudflare']
+      - hostname: beu.alakx.com
+        host: 10.0.70.24
+        port: 80
+        include: ['cloudflare']
+      - hostname:
+          - bridgespero.com
+          - prev.bridgespero.com
+          - dev.bridgespero.com
+          - meet.bridgespero.com
+        host: 10.0.50.36
+        port: 80
+  telemetry:
+    containers:
+      grafana:
+        ip: 10.0.50.91
+        network: macv50
+        image: docker.io/grafana/grafana:13.0.1
+      loki:
+        ip: 10.0.50.92
+        network: macv50
+        image: docker.io/grafana/loki:3.6.10
+      alloy:
+        ip: 10.0.50.93
+        network: macv50
+        image: docker.io/grafana/alloy:v1.15.1
+      tempo:
+        ip: 10.0.50.94
+        network: macv50
+        image: docker.io/grafana/tempo:2.10.4
+      uptime-kuma:
+        ip: 10.0.50.95
+        network: macv50
+        image: docker.io/louislam/uptime-kuma:2.2.1
+      prometheus:
+        ip: 10.0.50.96
+        network: macv50
+        image: docker.io/prom/prometheus:v3.11.2
+      prometheus-podman-exporter:
+        image: quay.io/navidys/prometheus-podman-exporter:v1.21.0
+      graphite-exporter:
+        ip: 10.0.50.97
+        network: macv50
+        image: docker.io/prom/graphite-exporter:v0.16.0
+    config:
+      loki_uri: http://10.0.50.92:3100
+      tempo_uri: http://10.0.50.94:3200
+      prometheus_uri: http://10.0.50.96:9090
+      jobs:
+        - name: prometheus
+          targets: ["localhost:9090"]
+        - name: tempo
+          targets: ["10.0.50.94:3200"]
+        - name: linux
+          targets: ["10.0.50.2:9100", "10.0.50.8:9100"]
+        - name: podman
+          targets: ["10.0.50.2:9882"]
+        - name: windows
+          targets: ["10.0.50.4:9182"]

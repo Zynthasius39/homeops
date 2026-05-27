@@ -1,0 +1,21 @@
+[Unit]
+{% if item is defined %}
+Description={{
+  _quadlet.container.description |
+  default(
+  _quadlet.name | capitalize ~ ' ' ~ item | capitalize ~ ' Container'
+  )
+}}
+{% else %}
+Description={{
+  _quadlet.container.description |
+  default(_quadlet.name | capitalize ~ ' Container')
+}}
+{% endif %}
+{% for key, value in (systemd_unit | default({})).items() %}
+{% if key in ['Requires', 'After'] %}
+{{ key }}={{ value | join (' ') }}
+{% else %}
+{{ key }}={{ value }}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,4 @@
+---
+container_name: kuma
+mount_src:
+  - "{{ container_data_dir }}/"

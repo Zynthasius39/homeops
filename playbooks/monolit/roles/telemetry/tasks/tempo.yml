@@ -1,0 +1,55 @@
+---
+- name: "{{ ansible_role_name }}/tempo: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+  loop: "{{ _quadlet.mount_src[:1] }}"
+
+- name: "{{ ansible_role_name }}/tempo: Change volume permissions"
+  ansible.builtin.file:
+    path: "{{ _quadlet.mount_src[1] | dirname }}"
+    state: directory
+    owner: "10001"
+    group: "10001"
+
+- name: "{{ ansible_role_name }}/tempo: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    command: "-target=all -config.file=/etc/tempo.yaml"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/etc/tempo.yaml:Z,ro"
+      - "{{ _quadlet.mount_src[1] }}:/var/tempo:Z"
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - telemetry.target
+    systemd_install:
+      WantedBy:
+        - telemetry.target
+  notify: "SystemD daemon reload"
+
+- name: "{{ ansible_role_name }}/tempo: Copy etc"
+  ansible.builtin.copy:
+    src: etc/tempo.yaml
+    dest: "{{ _quadlet.mount_src[0] }}"
+    mode: '0644'

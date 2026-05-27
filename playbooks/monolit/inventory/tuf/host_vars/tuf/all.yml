@@ -1,0 +1,7 @@
+---
+quadlet:
+  owner: zynf
+  group: zynf
+  data_dir: "{{ 'out/data' }}"
+  env_dir: "{{ 'out/env' }}"
+  default_network: podman

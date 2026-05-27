@@ -1,0 +1,11 @@
+---
+quadlet:
+  owner: seal
+  group: seal
+  data_dir: "{{ '/home/seal/containers' }}"
+  env_dir: "{{ '/home/seal/env' }}"
+  default_network: macv50
+  dns_by_network:
+    macv10: 10.0.10.1
+    macv50: 10.0.50.1
+    macv70: 10.0.70.1

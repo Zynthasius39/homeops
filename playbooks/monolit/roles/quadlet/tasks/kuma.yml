@@ -1,0 +1,46 @@
+---
+# FIX: Task group level vars
+- block:
+  - name: "{{ task }} : Load variables"
+    include_vars:
+      file: "{{ task }}"
+      name: quadlet
+
+  - debug:
+      msg: "{{ quadlet.container_name }}"
+  # - name: "{{ task }} : Create volume directories"
+  #   ansible.builtin.file:
+  #     path: "{{ item | dirname }}"
+  #     state: directory
+  #     owner: "{{ owner }}"
+  #     group: "{{ group }}"
+  #   loop: "{{ mount_src }}"
+  #
+  # - name: "{{ task }} : Generate quadlet"
+  #   containers.podman.podman_container:
+  #     name: "{{ container_name }}"
+  #     state: quadlet
+  #     quadlet_dir: "{{ quadlet_dir }}"
+  #
+  #     volume:
+  #       - "{{ mount_src[0] }}:/app/data:Z"
+  #     image: "{{ container_image }}"
+  #     ip: "{{ ip }}"
+  #     dns: "{{ dns }}"
+  #     network: "{{ network }}"
+  #     mac_address: "{{ ip | macgen() }}"
+  #
+  #     cpus: 2
+  #     memory: 512M
+  #     quadlet_options:
+  #       - "AutoUpdate=registry"
+  #       - "Pull=newer"
+  #       - |
+  #
+  #         {{ __systemd_unit }}
+  #         {{ __systemd_install.rstrip() }}
+  #   vars:
+  #     unit_wantedby:
+  #       - containers.target
+  #     unit_after:
+  #       - containers.target

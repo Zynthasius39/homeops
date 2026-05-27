@@ -1,0 +1,8 @@
+[Install]
+{% for key, value in (systemd_install | default({})).items() %}
+{% if key == 'WantedBy' %}
+{{ key }}={{ value | join(' ') }}
+{% else %}
+{{ key }}={{ value }}
+{% endif %}
+{% endfor %}

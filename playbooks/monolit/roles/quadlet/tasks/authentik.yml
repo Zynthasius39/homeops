@@ -1,0 +1,133 @@
+---
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ quadlet.owner }}"
+    group: "{{ quadlet.group }}"
+  loop: "{{ quadlet.t[task].mount_src + quadlet.t[task ~ '-pgsql'].mount_src }}"
+
+- name: "{{ task }} : Generate quadlets [server]"
+  containers.podman.podman_container:
+    name: "{{ quadlet._.container_name }}-server"
+    state: quadlet
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
+    env_file: "{{ quadlet._.container_env }}"
+    volume:
+      - "{{ quadlet._.mount_src[0] }}:/media:z"
+      - "{{ quadlet._.mount_src[1] }}:/templates:z"
+      - "{{ quadlet._.mount_src[2] }}:/certs:z"
+    command: server
+    image: ghcr.io/goauthentik/server:2026.2.1
+    dns: "{{ quadlet._.dns }}"
+    network:
+      - "{{ quadlet._.network }}:ip={{ quadlet._.ip }},mac={{ quadlet._.ip | macgen() }}"
+      - "{{ quadlet._.network_name }}"
+    shm_size: 512M
+    cpus: 2
+    memory: 1G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ quadlet.__systemd_service }}
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      ExecStartPre: "/bin/sh -c 'until podman healthcheck run {{ quadlet._.container_name }}-pgsql; do sleep 2; done'"
+      Restart: always
+      TimeoutStartSec: 300
+    systemd_unit:
+      Requires:
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
+      After:
+        - containers.target
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
+    systemd_install:
+      WantedBy:
+        - containers.target
+
+- name: "{{ task }} : Generate quadlets [worker]"
+  containers.podman.podman_container:
+    name: "{{ quadlet._.container_name }}-worker"
+    state: quadlet
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
+    env_file: "{{ quadlet._.container_env }}"
+    volume:
+      - "{{ quadlet._.mount_src[0] }}:/media:z"
+      - "{{ quadlet._.mount_src[1] }}:/templates:z"
+      - "{{ quadlet._.mount_src[2] }}:/certs:z"
+    command: worker
+    image: ghcr.io/goauthentik/server:2026.2.1
+    network: "{{ quadlet._.network_name }}"
+    shm_size: 512M
+    user: root
+    cpus: 2
+    memory: 1G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ quadlet.__systemd_service }}
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      ExecStartPre: "/bin/sh -c 'until podman healthcheck run {{ quadlet._.container_name }}-pgsql; do sleep 2; done'"
+      Restart: always
+      TimeoutStartSec: 300
+    systemd_unit:
+      Requires:
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
+      After:
+        - containers.target
+        - authentik-pgsql.service
+        - "{{ quadlet._.network_name}}-network.service"
+    systemd_install:
+      WantedBy:
+        - containers.target
+
+- name: "{{ task }} : Generate quadlet [pgsql]"
+  containers.podman.podman_container:
+    name: "{{ quadlet._.container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
+    env_file: "{{ quadlet._.container_env }}"
+    volume:
+      - "{{ quadlet.t[task ~ '-pgsql'].mount_src[0] }}:/var/lib/postgresql/data:Z"
+    image: docker.io/library/postgres:16-alpine
+    network: "{{ quadlet._.network_name }}"
+    healthcheck: pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
+    healthcheck_interval: 30s
+    healthcheck_retries: 5
+    healthcheck_start_period: 20s
+    healthcheck_timeout: 5s
+    cpus: 1
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ quadlet.__systemd_unit }}
+        {{ quadlet.__systemd_install.rstrip() }}
+  vars:
+    quadlet_container_name: "{{ task }}-pgsql"
+    systemd_unit:
+      After:
+        - containers.target
+        - "{{ quadlet._.network_name }}-network.service"
+      Requires:
+        - "{{ quadlet._.network_name }}-network.service"
+
+- name: "{{ task }} : Generate network quadlets"
+  containers.podman.podman_network:
+    name: "{{ quadlet._.network_name }}"
+    interface_name: "podman-{{ quadlet._.network_name[:9] }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet.quadlet_dir }}"
+    opt:
+      metric: 200

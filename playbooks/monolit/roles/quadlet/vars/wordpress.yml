@@ -1,0 +1,4 @@
+---
+mount_src:
+  - "{{ container_data_dir }}/html/"
+  - "{{ container_data_dir }}/mysql/"

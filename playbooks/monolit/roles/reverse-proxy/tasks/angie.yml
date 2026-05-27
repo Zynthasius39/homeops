@@ -1,0 +1,84 @@
+---
+- name: "{{ ansible_role_name }}/angie: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+  loop: "{{ _quadlet.mount_src }}"
+  notify: restart service
+
+- name: "{{ ansible_role_name }}/angie: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/etc/angie/angie.conf:Z"
+      - "{{ _quadlet.mount_src[1] }}:/etc/angie/http.d:Z"
+      - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
+      - "{{ _quadlet.mount_src[3] }}:/usr/share/angie/cdn:Z"
+      - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - containers.target
+    systemd_install:
+      WantedBy:
+        - containers.target
+  notify: restart service
+
+- name: "{{ ansible_role_name }}/angie: Copy etc"
+  ansible.builtin.copy:
+    src: etc/
+    dest: "{{ _quadlet.mount_src[0] | dirname }}"
+    mode: '0644'
+    directory_mode: '0755'
+  notify: restart service
+
+- name: "{{ ansible_role_name }}/angie: Copy angie data"
+  ansible.builtin.copy:
+    src: data/
+    dest: "{{ _quadlet.data }}"
+    mode: '0644'
+    directory_mode: '0755'
+  notify: restart service
+
+- name: "{{ ansible_role_name }}/angie: Render proxy host configs"
+  ansible.builtin.template:
+    src: proxy_host.conf.j2
+    dest: "{{ _quadlet.mount_src[1] }}/{% if proxy_host.hostname is string %}{{ proxy_host.hostname }}{% elif proxy_host.hostname is iterable %}{{ proxy_host.hostname[0] }}{% endif %}.conf"
+    mode: '0644'
+  loop: "{{ services[ansible_role_name].proxy_hosts }}"
+  loop_control:
+    loop_var: proxy_host
+  notify: restart service
+
+- name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Check if service is running"
+  ansible.builtin.systemd:
+    name: "{{ _quadlet.name }}.service"
+  register: service_status
+  listen: restart service
+
+- name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Restart if service was running"
+  ansible.builtin.systemd:
+    name: "{{ _quadlet.name }}.service"
+    state: restarted
+  when: service_status.status.ActiveState == "active"
+  listen: restart service

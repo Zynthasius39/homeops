@@ -1,0 +1,154 @@
+---
+- name: "{{ task }} : Load variables"
+  include_vars: "{{ task }}"
+
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src.values() | list | flatten }}"
+  vars:
+    container_name: minecraft
+
+- name: "{{ task }} : Generate quadlet [bedrock]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: "{{ container_env }}"
+    volume:
+      - "{{ mount_src.bedrock[0] }}:/data:Z"
+    image: docker.io/itzg/minecraft-bedrock-server:latest
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 2
+    memory: 4G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: minecraft-bedrock
+    unit_wantedby:
+      - containers.target
+    unit_requires:
+      - wait-for-internet.service
+    unit_after:
+      - containers.target
+      - wait-for-internet.service
+
+- name: "{{ task }} : Generate quadlet [bmc5]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    command: "{{ bmc5.command }}"
+    workdir: /data
+    volume:
+      - "{{ mount_src.bmc5[0] }}:/data:Z"
+      - "{{ mount_src.bmc5[1] }}:/data/backups"
+    image: localhost/graalvm:21.0.4
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+    user: "{{ bmc5.user }}:{{ bmc5.group }}"
+
+    cpus: 8
+    memory: 8.5G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: minecraft-bmc5
+    unit_wantedby:
+      - containers.target
+    unit_after:
+      - containers.target
+
+- name: "{{ task }} : Generate quadlet [gtcp4/gtcp5]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    env_file: >-
+      {{
+        ([env_dir ~ '/' ~ 'minecraft-gtcp4.env'] if item == 'gtcp5' else []) +
+        [container_env]
+      }}
+    volume: >-
+      {{
+        [ mount_src[item][0] ~ ':/data:Z' ] +
+        ([ mount_src[item][1] ~ ':/data/backups' ] if item == 'gtcp4' else [])
+      }}
+    workdir: /data
+    image: docker.io/itzg/minecraft-server:java8-alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+    interactive: true
+    no_healthcheck: true
+    tty: true
+
+    cpus: 4
+    memory: 8G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  loop:
+    - gtcp4
+    - gtcp5
+  vars:
+    container_name: "minecraft-{{ item }}"
+    unit_after:
+      - containers.target
+
+- name: "{{ task }} : Generate quadlet [nvanil]"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    workdir: /data
+    volume:
+      - "{{ mount_src.nvanil[0] }}:/data:Z"
+      - "{{ mount_src.nvanil[1] }}:/data/backups"
+    image: docker.io/itzg/minecraft-server:java21-alpine
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 4
+    memory: 6G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: minecraft-nvanil
+    unit_after:
+      - containers.target

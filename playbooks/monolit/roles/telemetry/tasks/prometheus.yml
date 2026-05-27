@@ -1,0 +1,53 @@
+---
+- name: "{{ ansible_role_name }}/prometheus: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+  loop: "{{ _quadlet.mount_src }}"
+
+- name: "{{ ansible_role_name }}/prometheus: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/etc/prometheus.yaml:Z,ro"
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - telemetry.target
+    systemd_install:
+      WantedBy:
+        - telemetry.target
+  notify: "SystemD daemon reload"
+
+- name: "{{ ansible_role_name }}/prometheus: Render etc"
+  ansible.builtin.template:
+    src: prometheus.yaml.j2
+    dest: "{{ _quadlet.mount_src[0] }}"
+    mode: '0644'
+  vars:
+    config: "{{ services[ansible_role_name].config }}"

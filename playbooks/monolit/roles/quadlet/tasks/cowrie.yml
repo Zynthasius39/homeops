@@ -1,0 +1,44 @@
+---
+- name: "{{ task }} : Load variables"
+  include_vars: "{{ task }}"
+
+- name: "{{ task }} : Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+  loop: "{{ mount_src }}"
+  vars:
+    container_name: cowrie
+
+- name: "{{ task }} : Generate quadlet"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    state: quadlet
+    quadlet_dir: "{{ quadlet_dir }}"
+
+    volume:
+      - "{{ mount_src[0] }}:/cowrie/cowrie-git/etc:Z"
+      - "{{ mount_src[1] }}:/cowrie/cowrie-git/var/log/cowrie:Z"
+    image: docker.io/cowrie/cowrie:latest
+    ip: "{{ ip }}"
+    dns: "{{ dns }}"
+    network: "{{ network }}"
+    mac_address: "{{ ip | macgen() }}"
+
+    cpus: 2
+    memory: 512M
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - "Pull=newer"
+      - |
+
+        {{ __systemd_unit }}
+        {{ __systemd_install.rstrip() }}
+  vars:
+    container_name: cowrie
+    unit_wantedby:
+      - containers.target
+    unit_after:
+      - containers.target

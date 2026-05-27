@@ -1,0 +1,46 @@
+---
+quadlet:
+  owner: seal
+  group: seal
+  data_dir: "{{ 'out/seal/data' | realpath }}"
+  env_dir: "{{ 'out/seal/env' | realpath }}"
+  quadlet_dir: "{{ 'out/quadlet' | realpath }}"
+  _:
+    container_name: "{{ quadlet_container_name | default(quadlet.t[task].container_name) }}"
+    container_env: "{{ quadlet.env_dir ~ '/' ~ quadlet._.container_name }}.env"
+    container_data_dir: "{{ quadlet.data_dir ~ '/' ~ quadlet._.container_name }}"
+    container_image: "{{ quadlet.container.image[quadlet._.container_name] }}"
+    ip: "{{ quadlet_ip | default(quadlet.container.ip[quadlet._.container_name]) }}"
+    mount_src: "{{ quadlet.t[task].mount_src }}"
+    network: "{{ quadlet.t[task].network | default('virbr0') }}"
+    dns: >
+      {{
+        {
+          "": "",
+          "default": "10.89.0.1",
+          "macvlan1": "10.0.0.254",
+          "virbr0": "192.168.122.1"
+        }[quadlet.t[task].network | default ('')]
+      }}
+  __systemd_install: "{{ lookup('template', 'systemd_install.j2') }}"
+  __systemd_service: "{{ lookup('template', 'systemd_service.j2') }}"
+  __systemd_unit: "{{ lookup('template', 'systemd_unit.j2') }}"
+  t:  # Task specific variables
+    authentik:
+      container_name: authentik
+      container_data_dir: "{{ quadlet.data_dir ~ '/' ~ 'authentik' }}"
+      mount_src:
+        main:
+          - "{{ quadlet._.container_data_dir }}/server/media/"
+          - "{{ quadlet._.container_data_dir }}/server/custom-templates/"
+          - "{{ quadlet._.container_data_dir }}/server/certs/"
+        pgsql:
+          - "{{ quadlet._.container_data_dir }}/pgsql/"
+        redis:
+          - "{{ quadlet._.container_data_dir }}/redis/"
+  container:  # Container specific variables (categorized)
+    ip:
+      authentik-server: 10.89.0.4
+      authentik-worker: 10.89.0.5
+      authentik-pgsql: 10.89.0.6
+      authentik-redis: 10.89.0.7

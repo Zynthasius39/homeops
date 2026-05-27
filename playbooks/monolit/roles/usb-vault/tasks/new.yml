@@ -1,0 +1,83 @@
+---
+- name: "{{ ansible_role_name }}/new: Load USB passphrase"
+  ansible.builtin.include_tasks: passphrase.yml
+
+- name: "{{ ansible_role_name }}/new: Load USB device path"
+  ansible.builtin.include_tasks: device.yml
+
+- name: "{{ ansible_role_name }}/new: Ask for USB device path (confirmation)"
+  ansible.builtin.pause:
+    prompt: |
+      [WARNING]: You are about to perform a DESTRUCTIVE operation on the device.
+      This action will ERASE all information and re-create partition table.
+      
+      Press ENTER the device path again to continue or CTRL+C then 'A' to abort.
+  register: usb_device_2
+
+- name: "{{ ansible_role_name }}/new: Confirming the device creation"
+  ansible.builtin.assert:
+    that:
+      - usb_device == usb_device_2.user_input
+    fail_msg: "Paths do not match, aborting the operation."
+
+- name: "{{ ansible_role_name }}/new: Remove existing LUKS container"
+  community.crypto.luks_device:
+    device: "{{ usb_device }}"
+    state: absent
+  when: force_recreate_usb_luks | default(false) | bool
+
+- name: "{{ ansible_role_name }}/new: Create and Open LUKS container with a passphrase"
+  community.crypto.luks_device:
+    device: "{{ usb_device }}"
+    state: opened
+    name: usb-vault
+    passphrase: "{{ usb_passphrase }}"
+  register: usb_luks_device
+
+- name: "{{ ansible_role_name }}/new: Create a ext4 filesystem on opened LUKS container"
+  community.general.filesystem:
+    fstype: ext4
+    dev: /dev/mapper/usb-vault
+
+- name: "{{ ansible_role_name }}/new: Create a mount point"
+  ansible.builtin.file:
+    path: /tmp/usb-vault
+    state: directory
+  register: usb_mount
+  when: usb_mount_path is not defined
+
+- name: "{{ ansible_role_name }}/new: Mount up the LUKS container"
+  ansible.posix.mount:
+    path: "{{ usb_mount_path | default(usb_mount.path) }}"
+    src: /dev/mapper/usb-vault
+    fstype: ext4
+    state: ephemeral
+
+- name: "{{ ansible_role_name }}/new: Identify UUID of the USB disk"
+  ansible.builtin.command: "blkid -s UUID -o value {{ usb_device }}"
+  register: blkid_cmd
+  changed_when: false
+
+- block:
+  - name: "{{ ansible_role_name }}/new: Ensure host_vars directory exists"
+    ansible.builtin.file:
+      path: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}"
+      state: directory
+    delegate_to: localhost
+
+  - name: "{{ ansible_role_name }}/new: Set the UUID fact(s)"
+    set_fact:
+      old_usb_uuid: "{{ usb_uuid | default(omit) }}"
+      usb_uuid: "{{ blkid_cmd.stdout }}"
+
+  - name: "{{ ansible_role_name }}/new: Persist UUID to host_vars"
+    ansible.builtin.copy:
+      dest: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}/usb-vault.yml"
+      content: |
+        ---
+        usb_uuid: {{ blkid_cmd.stdout }}
+        {% if usb_uuid is defined %}
+        old_usb_uuid: {{ usb_uuid }}
+        {% endif %}
+    delegate_to: localhost
+  when: usb_uuid is not defined or usb_uuid != blkid_cmd.stdout

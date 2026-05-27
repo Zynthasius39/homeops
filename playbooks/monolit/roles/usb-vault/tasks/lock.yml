@@ -1,0 +1,13 @@
+---
+- name: "{{ ansible_role_name }}/lock: Load USB device path"
+  ansible.builtin.include_tasks: device.yml
+
+- name: "{{ ansible_role_name }}/lock: Unmount the LUKS container"
+  ansible.posix.mount:
+    path: "{{ usb_mount_path | default('/tmp/usb-vault') }}"
+    state: unmounted
+
+- name: "{{ ansible_role_name }}/lock: Close the LUKS container"
+  community.crypto.luks_device:
+    device: "{{ '/dev/disk/by-uuid/' ~ usb_uuid | default(usb_device) }}"
+    state: closed

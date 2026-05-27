@@ -1,0 +1,11 @@
+---
+- block:
+  - name: "Ask for device path"
+    ansible.builtin.pause:
+      prompt: "Enter USB path"
+    register: usb_path
+
+  - name: "Set the USB device fact"
+    set_fact:
+      usb_device: "{{ usb_path.user_input }}"
+  when: usb_device is not defined and usb_uuid is not defined

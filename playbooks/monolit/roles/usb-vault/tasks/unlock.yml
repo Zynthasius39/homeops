@@ -1,0 +1,28 @@
+---
+- name: "{{ ansible_role_name }}/unlock: Load USB passphrase"
+  ansible.builtin.include_tasks: passphrase.yml
+
+- name: "{{ ansible_role_name }}/unlock: Load USB device path"
+  ansible.builtin.include_tasks: device.yml
+
+- name: "{{ ansible_role_name }}/unlock: Open the LUKS container with the passphrase"
+  community.crypto.luks_device:
+    device: "{{ '/dev/disk/by-uuid/' ~ usb_uuid | default(usb_device) }}"
+    state: opened
+    name: usb-vault
+    passphrase: "{{ usb_passphrase }}"
+  register: usb_luks_device
+
+- name: "{{ ansible_role_name }}/unlock: Create a mount point"
+  ansible.builtin.file:
+    path: /tmp/usb-vault
+    state: directory
+  register: usb_mount
+  when: usb_mount_path is not defined
+
+- name: "{{ ansible_role_name }}/unlock: Mount up the LUKS container"
+  ansible.posix.mount:
+    path: "{{ usb_mount_path | default(usb_mount.path) }}"
+    src: /dev/mapper/usb-vault
+    fstype: ext4
+    state: ephemeral

@@ -1,0 +1,48 @@
+---
+- name: "{{ ansible_role_name }}/root: Unlock the USB Vault"
+  ansible.builtin.include_role:
+    name: usb-vault
+    tasks_from: unlock.yml
+  when: not (ansible_facts["mounts"] | selectattr('mount', 'equalto', usb_mount_dir) | list | length > 0)
+
+- name: "{{ ansible_role_name }}/root: Create PKI directories"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ pki_root_dir }}/certs"
+    - "{{ pki_root_dir }}/private"
+    - "{{ pki_root_dir }}/csr"
+
+- name: "{{ ansible_role_name }}/root: Generate a private key for CA"
+  community.crypto.openssl_privatekey:
+    path: "{{ pki_root_dir }}/private/ca.key"
+    type: ECC
+    mode: 0400
+    curve: secp384r1
+
+- name: "{{ ansible_role_name }}/root: Generate a CA CSR"
+  community.crypto.openssl_csr:
+    path: "{{ pki_root_dir }}/csr/ca.csr"
+    privatekey_path: "{{ pki_root_dir }}/private/ca.key"
+    common_name: "{{ pki_common_name.root }}"
+    country_name: "{{ pki_country_name }}"
+    locality_name: "{{ pki_locality_name }}"
+    organization_name: "{{ pki_organization_name }}"
+    use_common_name_for_san: false
+    basic_constraints: 
+      - CA:TRUE
+    basic_constraints_critical: true
+    key_usage:
+      - keyCertSign
+      - cRLSign
+    key_usage_critical: true
+
+- name: "{{ ansible_role_name }}/root: Self-sign the CA Certificate"
+  community.crypto.x509_certificate:
+    path: "{{ pki_root_dir }}/certs/ca.crt"
+    csr_path: "{{ pki_root_dir }}/csr/ca.csr"
+    privatekey_path: "{{ pki_root_dir }}/private/ca.key"
+    provider: selfsigned
+    selfsigned_not_after: "+7300d"
+    selfsigned_digest: sha384

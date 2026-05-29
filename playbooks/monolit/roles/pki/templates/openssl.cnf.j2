@@ -1,0 +1,148 @@
+[ ca ]
+default_ca = ica_web_ca
+
+[ root_ca ]
+dir               = {{ pki_root_dir }}/root
+certs             = \$dir/certs
+crl_dir           = \$dir/crl
+new_certs_dir     = \$dir/newcerts
+database          = \$dir/index.txt
+serial            = \$dir/serial
+RANDFILE          = \$dir/private/.rand
+private_key       = \$dir/private/ca.key
+certificate       = \$dir/certs/ca.crt
+crl               = \$dir/crl/ca.crl
+crlnumber         = \$dir/crlnumber
+crl_extensions    = crl_ext
+default_days      = 7300
+default_crl_days  = 30
+default_md        = sha384
+preserve          = no
+email_in_dn       = no
+name_opt          = ca_default
+cert_opt          = ca_default
+policy            = policy_strict
+unique_subject    = no
+
+[ ica_web_ca ]
+dir               = {{ pki_ica_web_dir }}/ica/web
+certs             = \$dir/certs
+crl_dir           = \$dir/crl
+new_certs_dir     = \$dir/newcerts
+database          = \$dir/index.txt
+serial            = \$dir/serial
+RANDFILE          = \$dir/private/.rand
+private_key       = \$dir/private/ica-web.key
+certificate       = \$dir/certs/ica-web.crt
+crl_extensions    = crl_ext
+default_days      = 1825
+default_crl_days  = 30
+default_md        = sha256
+policy            = policy_strict
+x509_extensions   = server_cert
+copy_extensions   = copy
+
+[ ica_vpn_ca ]
+dir               = {{ pki_ica_vpn_dir }}/ica/vpn
+certs             = \$dir/certs
+new_certs_dir     = \$dir/newcerts
+database          = \$dir/index.txt
+serial            = \$dir/serial
+private_key       = \$dir/private/ica-vpn.key
+certificate       = \$dir/certs/ica-vpn.crt
+crl_extensions    = crl_ext
+default_days      = 1825
+default_crl_days  = 30
+default_md        = sha256
+policy            = policy_strict
+x509_extensions   = usr_cert
+
+[ ica_internal_ca ]
+dir               = {{ pki_ica_internal_dir }}/ica/internal
+certs             = \$dir/certs
+crl_dir           = \$dir/crl
+new_certs_dir     = \$dir/newcerts
+database          = \$dir/index.txt
+serial            = \$dir/serial
+private_key       = \$dir/private/ica-internal.key
+certificate       = \$dir/certs/ica-internal.crt
+crlnumber         = \$dir/crlnumber
+crl_extensions    = crl_ext
+default_days      = 1825
+default_crl_days  = 30
+default_md        = sha256
+policy            = policy_strict
+x509_extensions   = usr_cert
+
+[ policy_strict ]
+countryName             = match
+stateOrProvinceName     = optional
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+default_bits        = 4096
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+default_md          = sha256
+prompt              = no
+
+[ req_distinguished_name ]
+countryName                     = {{ pki_country }}
+0.organizationName              = {{ pki_org }}
+commonName                      = {{ pki_common_name }}
+
+#
+# Extensions
+#
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, keyCertSign, cRLSign
+
+[ v3_intermediate_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage = critical, keyCertSign, cRLSign
+crlDistributionPoints  = URI:{{ pki_crl_url }}/crl/ca.crl
+authorityInfoAccess = OCSP;URI:{{ pki_crl_url }}/ocsp
+
+[ v3_ocsp ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = OCSPSigning
+
+[ server_cert ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:false
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+crlDistributionPoints  = URI:{{ pki_crl_url }}/crl/ica-web.crl
+authorityInfoAccess = OCSP;URI:{{ pki_crl_url }}/ocsp
+
+[ client_cert ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints       = CA:false
+keyUsage               = critical, digitalSignature
+extendedKeyUsage       = clientAuth
+crlDistributionPoints  = URI:{{ pki_crl_url }}/crl/ica-web.crl
+authorityInfoAccess = OCSP;URI:{{ pki_crl_url }}/ocsp
+
+[ usr_cert ]
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid,issuer
+basicConstraints        = CA:false
+keyUsage                = critical, digitalSignature, keyEncipherment
+extendedKeyUsage        = clientAuth
+crlDistributionPoints   = URI:{{ pki_crl_url }}/crl/ica-web.crl
+authorityInfoAccess = OCSP;URI:{{ pki_crl_url }}/ocsp
+
+[ crl_ext ]
+authorityKeyIdentifier = keyid:always,issuer

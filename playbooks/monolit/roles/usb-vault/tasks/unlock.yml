@@ -15,14 +15,13 @@
 
 - name: "{{ ansible_role_name }}/unlock: Create a mount point"
   ansible.builtin.file:
-    path: /tmp/usb-vault
+    path: "{{ usb_mount_dir }}"
     state: directory
   register: usb_mount
-  when: usb_mount_path is not defined
 
 - name: "{{ ansible_role_name }}/unlock: Mount up the LUKS container"
   ansible.posix.mount:
-    path: "{{ usb_mount_path | default(usb_mount.path) }}"
+    path: "{{ usb_mount_dir }}"
     src: /dev/mapper/usb-vault
     fstype: ext4
     state: ephemeral

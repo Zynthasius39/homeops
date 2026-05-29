@@ -41,14 +41,13 @@
 
 - name: "{{ ansible_role_name }}/new: Create a mount point"
   ansible.builtin.file:
-    path: /tmp/usb-vault
+    path: "{{ usb_mount_dir }}"
     state: directory
   register: usb_mount
-  when: usb_mount_path is not defined
 
 - name: "{{ ansible_role_name }}/new: Mount up the LUKS container"
   ansible.posix.mount:
-    path: "{{ usb_mount_path | default(usb_mount.path) }}"
+    path: "{{ usb_mount_dir }}"
     src: /dev/mapper/usb-vault
     fstype: ext4
     state: ephemeral
@@ -61,7 +60,7 @@
 - block:
   - name: "{{ ansible_role_name }}/new: Ensure host_vars directory exists"
     ansible.builtin.file:
-      path: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}"
+      path: "{{ playbook_dir }}/group_vars/all"
       state: directory
     delegate_to: localhost
 
@@ -72,7 +71,7 @@
 
   - name: "{{ ansible_role_name }}/new: Persist UUID to host_vars"
     ansible.builtin.copy:
-      dest: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}/usb-vault.yml"
+      dest: "{{ playbook_dir }}/group_vars/all/usb.yml"
       content: |
         ---
         usb_uuid: {{ blkid_cmd.stdout }}

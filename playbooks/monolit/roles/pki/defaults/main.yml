@@ -1,0 +1,3 @@
+pki_country_name: AZ
+pki_dir: "{{ usb_mount_dir }}/pki"
+pki_root_dir: "{{ pki_dir }}/root"

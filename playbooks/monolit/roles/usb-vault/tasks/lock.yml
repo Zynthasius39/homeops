@@ -4,7 +4,7 @@
 
 - name: "{{ ansible_role_name }}/lock: Unmount the LUKS container"
   ansible.posix.mount:
-    path: "{{ usb_mount_path | default('/tmp/usb-vault') }}"
+    path: "{{ usb_mount_dir }}"
     state: unmounted
 
 - name: "{{ ansible_role_name }}/lock: Close the LUKS container"

@@ -20,37 +20,39 @@
       - usb_device == usb_device_2.user_input
     fail_msg: "Paths do not match, aborting the operation."
 
-- name: "{{ ansible_role_name }}/new: Remove existing LUKS container"
-  community.crypto.luks_device:
-    device: "{{ usb_device }}"
-    state: absent
-  when: force_recreate_usb_luks | default(false) | bool
+- block:
+    - name: "{{ ansible_role_name }}/new: Remove existing LUKS container"
+      community.crypto.luks_device:
+        device: "{{ usb_device }}"
+        state: absent
+      when: force_recreate_usb_luks | default(false) | bool
 
-- name: "{{ ansible_role_name }}/new: Create and Open LUKS container with a passphrase"
-  community.crypto.luks_device:
-    device: "{{ usb_device }}"
-    state: opened
-    name: usb-vault
-    passphrase: "{{ usb_passphrase }}"
-  register: usb_luks_device
+    - name: "{{ ansible_role_name }}/new: Create and Open LUKS container with a passphrase"
+      community.crypto.luks_device:
+        device: "{{ usb_device }}"
+        state: opened
+        name: usb-vault
+        passphrase: "{{ usb_passphrase }}"
+      register: usb_luks_device
 
-- name: "{{ ansible_role_name }}/new: Create a ext4 filesystem on opened LUKS container"
-  community.general.filesystem:
-    fstype: ext4
-    dev: /dev/mapper/usb-vault
+    - name: "{{ ansible_role_name }}/new: Create a ext4 filesystem on opened LUKS container"
+      community.general.filesystem:
+        fstype: ext4
+        dev: /dev/mapper/usb-vault
 
-- name: "{{ ansible_role_name }}/new: Create a mount point"
-  ansible.builtin.file:
-    path: "{{ usb_mount_dir }}"
-    state: directory
-  register: usb_mount
+    - name: "{{ ansible_role_name }}/new: Create a mount point"
+      ansible.builtin.file:
+        path: "{{ usb_mount_dir }}"
+        state: directory
+      register: usb_mount
 
-- name: "{{ ansible_role_name }}/new: Mount up the LUKS container"
-  ansible.posix.mount:
-    path: "{{ usb_mount_dir }}"
-    src: /dev/mapper/usb-vault
-    fstype: ext4
-    state: ephemeral
+    - name: "{{ ansible_role_name }}/new: Mount up the LUKS container"
+      ansible.posix.mount:
+        path: "{{ usb_mount_dir }}"
+        src: /dev/mapper/usb-vault
+        fstype: ext4
+        state: ephemeral
+  become: true
 
 - name: "{{ ansible_role_name }}/new: Identify UUID of the USB disk"
   ansible.builtin.command: "blkid -s UUID -o value {{ usb_device }}"

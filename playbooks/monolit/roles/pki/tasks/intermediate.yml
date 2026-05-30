@@ -1,0 +1,50 @@
+---
+- name: "{{ ansible_role_name }}/ica/{{ ica }}: Create PKI directories"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+  become: true
+  loop:
+    - "{{ pki_ica_dir }}/certs"
+    - "{{ pki_ica_dir }}/private"
+    - "{{ pki_ica_dir }}/csr"
+
+- name: "{{ ansible_role_name }}/ica/{{ ica }}: Generate a private key for CA"
+  community.crypto.openssl_privatekey:
+    path: "{{ pki_ica_dir }}/private/ica.key"
+    type: ECC
+    mode: 0400
+    curve: secp256r1
+
+- name: "{{ ansible_role_name }}/ica/{{ ica }}: Generate a CA CSR"
+  community.crypto.openssl_csr:
+    path: "{{ pki_ica_dir }}/csr/ica.csr"
+    privatekey_path: "{{ pki_ica_dir }}/private/ica.key"
+    common_name: "{{ pki_common_name[ica] }}"
+    country_name: "{{ pki_country_name }}"
+    locality_name: "{{ pki_locality_name }}"
+    organization_name: "{{ pki_organization_name }}"
+    crl_distribution_points:
+      - full_name: "URI:{{ pki_crl_url }}/revocations.crl"
+    use_common_name_for_san: false
+    basic_constraints: 
+      - CA:TRUE
+      - pathlen:0
+    basic_constraints_critical: true
+    key_usage:
+      - keyCertSign
+      - cRLSign
+    key_usage_critical: true
+
+- name: "{{ ansible_role_name }}/ica/{{ ica }}: Sign the Intermediate CA with the Root CA"
+  community.crypto.x509_certificate:
+    path: "{{ pki_ica_dir }}/certs/ica.crt"
+    csr_path: "{{ pki_ica_dir }}/csr/ica.csr"
+    privatekey_path: "{{ pki_ica_dir }}/private/ica.key"
+    provider: ownca
+    ownca_not_after: "+1825d"
+    ownca_digest: sha256
+    ownca_path: "{{ pki_root_dir }}/certs/ca.crt"
+    ownca_privatekey_path: "{{ pki_root_dir }}/private/ca.key"

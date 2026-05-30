@@ -1,14 +1,11 @@
 ---
-- name: "{{ ansible_role_name }}/root: Unlock the USB Vault"
-  ansible.builtin.include_role:
-    name: usb-vault
-    tasks_from: unlock.yml
-  when: not (ansible_facts["mounts"] | selectattr('mount', 'equalto', usb_mount_dir) | list | length > 0)
-
 - name: "{{ ansible_role_name }}/root: Create PKI directories"
   ansible.builtin.file:
     path: "{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     state: directory
+  become: true
   loop:
     - "{{ pki_root_dir }}/certs"
     - "{{ pki_root_dir }}/private"

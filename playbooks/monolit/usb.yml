@@ -1,6 +1,4 @@
 ---
-- hosts: localhost
-  connection: local
-  become: true
+- hosts: pki_hosts
   roles:
     - usb-vault

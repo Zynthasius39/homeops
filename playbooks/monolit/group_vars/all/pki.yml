@@ -2,7 +2,10 @@ pki_common_name:
   root: Alakx Root CA
   acme: Alakx ACME CA
   infra: Alakx Infrastructure CA
+  vpn: Alakx VPN CA
 
 pki_organization_name: Alakx Homelab
 pki_locality_name: Sumqayit
 pki_country_name: AZ
+pki_crl_url: http://ca.home.alak
+pki_dir: /home/syno/pki

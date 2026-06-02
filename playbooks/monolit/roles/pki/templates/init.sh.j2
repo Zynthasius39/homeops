@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+rm -rf "$STEPPATH"/{,.[^.]}*
+echo stepca > /tmp/step_ca_pass
+
+step ca init \
+  --acme \
+  --deployment-type standalone \
+  --password-file /tmp/step_ca_pass \
+  --name "{{ stepca.name }}" \
+{% for name in stepca.dns %}
+  --dns {{ name }} \
+{% endfor %}
+  --address {{ stepca.address | default(':443') }} \
+  --provisioner {{ stepca.provisioner }}
+
+shred -u \
+  "$STEPPATH"/secrets/root_ca_key \
+  "$STEPPATH"/secrets/intermediate_ca_key \
+  "$STEPPATH"/certs/root_ca.crt \
+  "$STEPPATH"/certs/intermediate_ca.crt \
+  /tmp/step_ca_pass
+
+cp /tmp/ca.crt "$STEPPATH"/certs/root_ca.crt
+cp /tmp/ica.crt "$STEPPATH"/certs/intermediate_ca.crt
+cp /tmp/ica.key "$STEPPATH"/secrets/intermediate_ca_key

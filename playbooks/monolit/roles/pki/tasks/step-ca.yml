@@ -1,55 +1,107 @@
 ---
-- name: "{{ ansible_role_name }}/step-ca: Create volume directories"
-  ansible.builtin.file:
-    path: "{{ item | dirname }}"
-    state: directory
-    owner: "{{ _quadlet.owner }}"
-    group: "{{ _quadlet.group }}"
-  loop: "{{ _quadlet.mount_src }}"
+- block:
+    - name: "{{ ansible_role_name }}/step-ca: Look for existing context"
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ _quadlet.mount_src[0] }}certs/root_ca.crt"
+        - "{{ _quadlet.mount_src[0] }}certs/intermediate_ca.crt"
+        - "{{ _quadlet.mount_src[0] }}secrets/intermediate_ca_key"
+        - "{{ _quadlet.mount_src[0] }}config/ca.json"
+        - "{{ _quadlet.mount_src[0] }}config/defaults.json"
+      register: file_checks
 
-- name: "{{ ansible_role_name }}/step-ca: Generate quadlets"
-  containers.podman.podman_container:
-    name: "{{ _quadlet.name }}"
-    state: quadlet
-    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
-    volume:
-      - "{{ _quadlet.mount_src[0] }}:/home/step:Z"
-    image: "{{ _quadlet.image }}"
-    dns: "{{ _quadlet.dns }}"
-    network: "{{ _quadlet.network }}"
-    ip: "{{ _quadlet.ip }}"
-    mac_address: "{{ _quadlet.mac_address }}"
-    cpus: "{{ _quadlet.cpus }}"
-    memory: "{{ _quadlet.memory }}"
-    quadlet_options:
-      - "AutoUpdate=registry"
-      - |
+    - name: "{{ ansible_role_name }}/step-ca: Define helper variable for file counts"
+      ansible.builtin.set_fact:
+        existing_files: "{{ file_checks.results | map(attribute='stat.exists') | select('true') | list | length }}"
 
-        {{ _quadlet.__systemd_service }}
-        {{ _quadlet.__systemd_unit }}
-        {{ _quadlet.__systemd_install.rstrip() }}
-  vars:
-    systemd_service:
-      Restart: always
-    systemd_unit:
-      After:
-        - containers.target
-    systemd_install:
-      WantedBy:
-        - containers.target
-  notify:
-    - SystemD daemon reload
-    - restart service
+    - name: "{{ ansible_role_name }}/step-ca: Create volume directories"
+      ansible.builtin.file:
+        path: "{{ item | dirname }}"
+        state: directory
+        owner: 1000  # Step-ca User
+        group: 1000  # Step-ca Group
+      loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Check if service is running"
-  ansible.builtin.systemd:
-    name: "{{ _quadlet.name }}.service"
-  register: service_status
-  listen: restart service
+    - name: "{{ ansible_role_name }}/step-ca: Render init.sh"
+      ansible.builtin.template:
+        src: init.sh.j2
+        dest: "{{ _quadlet.data }}/init.sh"
+        mode: '0755'
+      register: init_script
 
-- name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Restart if service was running"
-  ansible.builtin.systemd:
-    name: "{{ _quadlet.name }}.service"
-    state: restarted
-  when: service_status.status.ActiveState == "active"
-  listen: restart service
+    - name: "{{ ansible_role_name }}/step-ca: Step-ca Init"
+      containers.podman.podman_container:
+        name: "{{ _quadlet.name }}"
+        state: started
+        entrypoint: /bin/bash
+        command: /usr/local/bin/init.sh
+        env:
+          STEP: "{{ steppath }}"
+          STEPPATH: "{{ steppath }}"
+        volume:
+          - "{{ _quadlet.mount_src[0] }}:{{ steppath }}:Z"
+          - "{{ pki_dir }}/ca.crt:/tmp/ca.crt:ro,Z"
+          - "{{ pki_ica_dir }}/certs/ica.crt:/tmp/ica.crt:ro,Z"
+          - "{{ pki_ica_dir }}/private/ica.key:/tmp/ica.key:ro,Z"
+          - "{{ _quadlet.data }}/init.sh:/usr/local/bin/init.sh:ro,Z"
+        image: "{{ _quadlet.image }}"
+        network: none
+        cpus: "{{ _quadlet.cpus }}"
+        memory: "{{ _quadlet.memory }}"
+        detach: false
+        rm: true
+      when: existing_files | int != 5 or init_script.changed
+
+    - name: "{{ ansible_role_name }}/step-ca: Generate quadlets"
+      containers.podman.podman_container:
+        name: "{{ _quadlet.name }}"
+        state: quadlet
+        command: /usr/local/bin/step-ca
+        quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+        env:
+          STEP: "{{ steppath }}"
+          STEPPATH: "{{ steppath }}"
+        volume:
+          - "{{ _quadlet.mount_src[0] }}:{{ steppath }}:Z"
+        image: "{{ _quadlet.image }}"
+        dns: "{{ _quadlet.dns }}"
+        network: "{{ _quadlet.network }}"
+        ip: "{{ _quadlet.ip }}"
+        mac_address: "{{ _quadlet.mac_address }}"
+        cpus: "{{ _quadlet.cpus }}"
+        memory: "{{ _quadlet.memory }}"
+        quadlet_options:
+          - "AutoUpdate=registry"
+          - |
+
+            {{ _quadlet.__systemd_service }}
+            {{ _quadlet.__systemd_unit }}
+            {{ _quadlet.__systemd_install.rstrip() }}
+      vars:
+        systemd_service:
+          Restart: always
+        systemd_unit:
+          After:
+            - containers.target
+        systemd_install:
+          WantedBy:
+            - containers.target
+      register: quadlet_task
+
+    - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Reload Systemd Daemon"
+      ansible.builtin.systemd_service:
+          daemon_reload: true
+      when: quadlet_task.changed
+
+    - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Check if service is running"
+      ansible.builtin.systemd:
+        name: "{{ _quadlet.name }}.service"
+      register: service_status
+
+    - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Restart if service was running"
+      ansible.builtin.systemd:
+        name: "{{ _quadlet.name }}.service"
+        state: restarted
+      when: service_status.status.ActiveState == "active"
+  become: true

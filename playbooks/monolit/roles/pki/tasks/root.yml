@@ -10,6 +10,7 @@
     - "{{ pki_root_dir }}/certs"
     - "{{ pki_root_dir }}/private"
     - "{{ pki_root_dir }}/csr"
+    - "{{ pki_dir }}"
 
 - name: "{{ ansible_role_name }}/root: Generate a private key for CA"
   community.crypto.openssl_privatekey:
@@ -43,3 +44,9 @@
     provider: selfsigned
     selfsigned_not_after: "+7300d"
     selfsigned_digest: sha384
+
+- name: "{{ ansible_role_name }}/ica: Copy the Root CA to the PKI directory"
+  ansible.builtin.copy:
+    src: "{{ pki_root_dir }}/certs/ca.crt"
+    dest: "{{ pki_dir }}/ca.crt"
+    remote_src: true

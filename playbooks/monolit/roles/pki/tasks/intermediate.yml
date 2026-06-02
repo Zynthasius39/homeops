@@ -48,3 +48,9 @@
     ownca_digest: sha256
     ownca_path: "{{ pki_root_dir }}/certs/ca.crt"
     ownca_privatekey_path: "{{ pki_root_dir }}/private/ca.key"
+
+- name: "{{ ansible_role_name }}/ica/{{ ica }}: Concatenate certificates into a chain"
+  shell: |
+    cat {{ pki_ica_dir }}/certs/ica.crt {{ pki_dir }}/ca.crt > {{ pki_ica_dir }}/ca-chain.crt
+  args:
+    creates: "{{ pki_ica_dir }}/ca-chain.crt"

@@ -28,6 +28,12 @@ records = [
 },
 {
   zone   = "home.alak."
+  name   = "ups"
+  type   = "A"
+  values = ["10.0.50.99"]
+},
+{
+  zone   = "home.alak."
   name   = "ca"
   type   = "A"
   values = ["10.0.50.100"]

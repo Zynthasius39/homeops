@@ -6,7 +6,7 @@
     apply:
       tags: [always]
   when: not (ansible_facts["mounts"] | selectattr('mount', 'equalto', usb_mount_dir) | list | length > 0)
-  tags: [always]
+  tags: [pki_status, pki_root, pki_intermediate, pki_acme, pki_all]
 
 # 1. Health Checks
 - name: "{{ ansible_role_name }}/status: Check expiration and health"
@@ -16,38 +16,39 @@
       tags: [pki_status, pki_all]
   tags: [pki_status, pki_all]
 
-# 2. Root CA (Gated for safety)
+# 2. Root CA
 - name: "{{ ansible_role_name }}/root: Root CA lifecycle"
   ansible.builtin.include_tasks:
     file: root.yml
     apply:
-      tags: [pki_root]
-  tags: [pki_root]
+      tags: [pki_root, pki_acme, pki_all]
+  tags: [pki_root, pki_acme, pki_all]
 
 # 3. Intermediate CA
 - name: "{{ ansible_role_name }}/ica: Intermediate CA lifecycle"
   ansible.builtin.include_tasks:
     file: intermediate.yml
     apply:
-      tags: [pki_intermediate, pki_all]
+      tags: [pki_intermediate, pki_acme, pki_all]
   loop:
     - acme
     - infra
     - vpn
   loop_control:
     loop_var: ica
-  tags: [pki_intermediate, pki_all]
+  tags: [pki_intermediate, pki_acme, pki_all]
 
-# 4. Container Deployment
+# 4. Step-ca Deployment
 - name: "{{ ansible_role_name }}/step-ca: Infrastructure deployment"
   ansible.builtin.include_tasks:
     file: step-ca.yml
     apply:
-      tags: [pki_infra, pki_all]
+      tags: [pki_acme, pki_all]
   vars:
+    ica: acme
     quadlet_container_name: step-ca
     quadlet_mount_src:
-      - "{{ _quadlet.data ~ '/etc/' }}"
+      - "{{ _quadlet.data ~ '/data/' }}"
     quadlet_cpus: 1
     quadlet_memory: 256M
-  tags: [pki_infra, pki_all]
+  tags: [pki_acme, pki_all]

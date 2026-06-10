@@ -8,7 +8,6 @@
   when: not (ansible_facts["mounts"] | selectattr('mount', 'equalto', usb_mount_dir) | list | length > 0)
   tags: [pki_status, pki_root, pki_intermediate, pki_acme, pki_all]
 
-# 1. Health Checks
 - name: "{{ ansible_role_name }}/status: Check expiration and health"
   ansible.builtin.include_tasks:
     file: status.yml
@@ -16,7 +15,6 @@
       tags: [pki_status, pki_all]
   tags: [pki_status, pki_all]
 
-# 2. Root CA
 - name: "{{ ansible_role_name }}/root: Root CA lifecycle"
   ansible.builtin.include_tasks:
     file: root.yml
@@ -24,7 +22,6 @@
       tags: [pki_root, pki_acme, pki_all]
   tags: [pki_root, pki_acme, pki_all]
 
-# 3. Intermediate CA
 - name: "{{ ansible_role_name }}/ica: Intermediate CA lifecycle"
   ansible.builtin.include_tasks:
     file: intermediate.yml
@@ -38,7 +35,6 @@
     loop_var: ica
   tags: [pki_intermediate, pki_acme, pki_all]
 
-# 4. Step-ca Deployment
 - name: "{{ ansible_role_name }}/step-ca: Infrastructure deployment"
   ansible.builtin.include_tasks:
     file: step-ca.yml
@@ -52,3 +48,16 @@
     quadlet_cpus: 1
     quadlet_memory: 256M
   tags: [pki_acme, pki_all]
+
+- name: "{{ ansible_role_name }}/server: Server certificate lifecycle"
+  ansible.builtin.include_tasks:
+    file: server.yml
+    apply:
+      tags: [pki_server, pki_all]
+  vars:
+    ica: infra
+  loop:
+    - common_name: argocd.naquadah.alak
+  loop_control:
+    loop_var: server
+  tags: [pki_server, pki_all]

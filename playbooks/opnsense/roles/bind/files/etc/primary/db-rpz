@@ -1,0 +1,13 @@
+$TTL 86400  ; 1 day
+@           IN SOA  localhost. admin.localhost. (
+            1778532440 ; serial
+            21600      ; refresh (6 hours)
+            3600       ; retry (1 hour)
+            3542400    ; expire (5 weeks 6 days)
+            3600       ; minimum (1 hour)
+            )
+            NS  localhost.
+$TTL 3600  ; 1 hour
+;$ORIGIN alakx.com
+;root        A  10.0.10.1
+;mc          A  10.0.10.1

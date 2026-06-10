@@ -74,7 +74,7 @@ records = [
 {
   zone   = "naquadah.alak."
   type   = "A"
-  values = ["10.0.20.1"]
+  values = ["10.0.20.0"]
 },
 {
   zone   = "naquadah.alak."
@@ -91,8 +91,8 @@ records = [
 {
   zone   = "naquadah.alak."
   name   = "argocd"
-  type   = "A"
-  values = ["10.0.20.2"]
+  type   = "CNAME"
+  values = ["naquadah.alak."]
 },
 
 ]

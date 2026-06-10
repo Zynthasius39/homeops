@@ -10,7 +10,7 @@ records = [
 },
 {
   zone   = "home.alak."
-  name   = "angie"
+  name   = "_acme-challenge"
   type   = "CNAME"
   values = ["home.alak."]
 },
@@ -87,6 +87,12 @@ records = [
   name   = "dev.gopher"
   type   = "CNAME"
   values = ["naquadah.alak."]
+},
+{
+  zone   = "naquadah.alak."
+  name   = "argocd"
+  type   = "A"
+  values = ["10.0.20.2"]
 },
 
 ]

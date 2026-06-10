@@ -41,6 +41,15 @@ resource "dns_mx_record_set" "this" {
   }
 }
 
+resource "dns_ns_record_set" "this" {
+  for_each = local.by_type["NS"]
+
+  zone        = each.value.zone
+  name        = each.value.name
+  nameservers = each.value.values
+  ttl         = each.value.ttl
+}
+
 resource "dns_txt_record_set" "this" {
   for_each = local.by_type["TXT"]
 

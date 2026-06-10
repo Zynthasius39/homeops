@@ -34,9 +34,9 @@ variable "records" {
   validation {
     condition = alltrue([
       for r in var.records :
-      contains(["A", "AAAA", "CNAME", "MX", "TXT", "PTR", "SRV"], r.type)
+      contains(["A", "AAAA", "CNAME", "MX", "NS", "TXT", "PTR", "SRV"], r.type)
     ])
-    error_message = "Each record 'type' must be one of: A, AAAA, CNAME, MX, TXT, PTR, SRV."
+    error_message = "Each record 'type' must be one of: A, AAAA, CNAME, MX, NS, TXT, PTR, SRV."
   }
 
   validation {
@@ -54,6 +54,7 @@ locals {
     AAAA  = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "AAAA" }
     CNAME = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "CNAME" }
     MX    = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "MX" }
+    NS    = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "NS" }
     TXT   = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "TXT" }
     PTR   = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "PTR" }
     SRV   = { for r in var.records : "${r.zone}__${r.name != null ? r.name : "."}" => r if r.type == "SRV" }

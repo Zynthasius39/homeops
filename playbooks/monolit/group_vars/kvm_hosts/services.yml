@@ -1,11 +1,17 @@
 ---
 services:
   reverse-proxy:
+    config:
+      acme_uri: https://ca.home.alak/acme/acme/directory
+      challenge: http
     containers:
       angie:
         ip: 10.0.50.23
         network: macv50
         image: docker.angie.software/angie:1.11.4-minimal
+    default_server:
+      hostname: home.alak
+      local: true
     proxy_hosts:
       - hostname: wiki.alakx.com
         host: 10.0.50.28
@@ -15,9 +21,11 @@ services:
         host: 10.0.50.91
         port: 3000
         include: ['cloudflare']
-      - hostname:
-          - status.alakx.com
-          - status.home.alak
+      - hostname: status.alakx.com
+        host: 10.0.50.95
+        port: 3001
+      - hostname: status.home.alak
+        local: true
         host: 10.0.50.95
         port: 3001
         include: ['cloudflare']

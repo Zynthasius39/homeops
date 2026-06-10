@@ -17,6 +17,12 @@ server {
 
   listen 80;
   listen [::]:80;
+{% if proxy_host.local is defined and proxy_host.local %}
+  listen 443 ssl;
+  listen [::]:443 ssl;
+
+  acme stepca;
+{% endif %}
 
 {% if proxy_host.hostname is string %}
   server_name {{ proxy_host.hostname }};

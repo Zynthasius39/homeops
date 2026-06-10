@@ -2,11 +2,23 @@
 # default_server
 # ------------------------------------------------------------
 
+{% set host = services[ansible_role_name].default_server %}
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
+{% if host.local is defined and host.local %}
+  listen 443 ssl default_server;
+  listen [::]:443 ssl default_server;
 
-  server_name default-host.localhost;
+  acme stepca;
+{% endif %}
+
+{% if host.hostname is string %}
+  server_name {{ host.hostname }};
+{% elif host.hostname is iterable %}
+  server_name {{ host.hostname | join(' ') }};
+{% endif %}
+
   access_log /var/log/angie/default-host.access.log combined;
   error_log /var/log/angie/default-host.error.log warn;
 

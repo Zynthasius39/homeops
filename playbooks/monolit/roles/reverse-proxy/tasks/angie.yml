@@ -6,8 +6,7 @@
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
   loop: "{{ _quadlet.mount_src }}"
-  notify: restart service
-
+  register: volume_dirs
 - name: "{{ ansible_role_name }}/angie: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
@@ -42,23 +41,28 @@
     systemd_install:
       WantedBy:
         - containers.target
-  notify: restart service
-
+  register: quadlet_gen
 - name: "{{ ansible_role_name }}/angie: Copy etc"
   ansible.builtin.copy:
     src: etc/
     dest: "{{ _quadlet.mount_src[0] | dirname }}"
     mode: '0644'
     directory_mode: '0755'
-  notify: restart service
-
+  register: copy_etc
 - name: "{{ ansible_role_name }}/angie: Copy angie data"
   ansible.builtin.copy:
     src: data/
     dest: "{{ _quadlet.data }}"
     mode: '0644'
     directory_mode: '0755'
-  notify: restart service
+  register: copy_data
+
+- name: "{{ ansible_role_name }}/angie: Render default server config"
+  ansible.builtin.template:
+    src: default_server.conf.j2
+    dest: "{{ _quadlet.mount_src[1] }}/default_server.conf"
+    mode: '0644'
+  register: render_default
 
 - name: "{{ ansible_role_name }}/angie: Render proxy host configs"
   ansible.builtin.template:
@@ -68,17 +72,45 @@
   loop: "{{ services[ansible_role_name].proxy_hosts }}"
   loop_control:
     loop_var: proxy_host
-  notify: restart service
+  register: render_proxy
+
+- name: "{{ ansible_role_name }}/angie: Render angie config"
+  ansible.builtin.template:
+    src: angie.conf.j2
+    dest: "{{ _quadlet.mount_src[0] | dirname }}/angie.conf"
+    mode: '0644'
+  register: render_angie
 
 - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Check if service is running"
   ansible.builtin.systemd:
     name: "{{ _quadlet.name }}.service"
   register: service_status
-  listen: restart service
+  when: >
+    [
+      volume_dirs,
+      quadlet_gen,
+      copy_etc,
+      copy_data,
+      render_default,
+      render_proxy,
+      render_angie
+    ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
 
 - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Restart if service was running"
   ansible.builtin.systemd:
     name: "{{ _quadlet.name }}.service"
     state: restarted
-  when: service_status.status.ActiveState == "active"
-  listen: restart service
+  when: >
+    (
+      [
+        volume_dirs,
+        quadlet_gen,
+        copy_etc,
+        copy_data,
+        render_default,
+        render_proxy,
+        render_angie
+      ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+    )
+    and service_status.status is defined
+    and service_status.status.ActiveState == "active"

@@ -20,7 +20,10 @@ cilium_config: |
   {% if cilium_ingress_enabled %}
   ingressController:
     enabled: true
-    loadbalancerMode: dedicated
+    loadbalancerMode: shared
+    service:
+      labels:
+        service.kubernetes.io/advertise-bgp: "true"
   {% endif %}
   ipam:
     mode: kubernetes

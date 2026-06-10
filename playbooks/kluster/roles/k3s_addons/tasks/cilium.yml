@@ -21,7 +21,7 @@
         template:
           metadata:
             annotations:
-              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+              kubectl.kubernetes.io/restartedAt: "{{ ansible['date_time']['iso8601'] }}"
   when:
     - cilium_install.changed
     - cilium_install.status.revision | int > 1
@@ -38,7 +38,7 @@
         template:
           metadata:
             annotations:
-              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
+              kubectl.kubernetes.io/restartedAt: "{{ ansible['date_time']['iso8601'] }}"
   when:
     - cilium_install.changed
     - cilium_install.status.revision | int > 1

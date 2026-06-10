@@ -21,8 +21,6 @@ cilium_config: |
   ingressController:
     enabled: true
     loadbalancerMode: dedicated
-    defaultSecretNamespace: kube-system
-    defaultSecretName: argocd-server-cert
   {% endif %}
   ipam:
     mode: kubernetes

@@ -94,5 +94,11 @@ records = [
   type   = "CNAME"
   values = ["naquadah.alak."]
 },
+{
+  zone   = "naquadah.alak."
+  name   = "grafana"
+  type   = "CNAME"
+  values = ["naquadah.alak."]
+},
 
 ]

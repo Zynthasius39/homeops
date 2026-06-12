@@ -3,7 +3,7 @@
   ansible.builtin.copy:
     src: systemd/telemetry.target
     dest: /etc/systemd/system
-    mode: '0644'
+    mode: "0644"
   notify: "SystemD daemon reload"
 
 - name: "{{ ansible_role_name }}/loki"
@@ -77,3 +77,10 @@
       - "{{ _quadlet.data ~ '/data/' }}"
     quadlet_cpus: 1
     quadlet_memory: 512M
+
+- name: "{{ ansible_role_name }}/apcupsd-exporter"
+  ansible.builtin.include_tasks: "apcupsd-exporter.yml"
+  vars:
+    quadlet_container_name: apcupsd-exporter
+    quadlet_cpus: 1
+    quadlet_memory: 128M

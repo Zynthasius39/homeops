@@ -16,11 +16,11 @@ services:
       - hostname: wiki.alakx.com
         host: 10.0.50.28
         port: 3000
-        include: ['cloudflare']
+        include: ["cloudflare"]
       - hostname: grafana.alakx.com
         host: 10.0.50.91
         port: 3000
-        include: ['cloudflare']
+        include: ["cloudflare"]
       - hostname: status.alakx.com
         host: 10.0.50.95
         port: 3001
@@ -28,11 +28,11 @@ services:
         local: true
         host: 10.0.50.95
         port: 3001
-        include: ['cloudflare']
+        include: ["cloudflare"]
       - hostname: beu.alakx.com
         host: 10.0.70.24
         port: 80
-        include: ['cloudflare']
+        include: ["cloudflare"]
       - hostname:
           - bridgespero.com
           - prev.bridgespero.com
@@ -72,10 +72,15 @@ services:
         ip: 10.0.50.97
         network: macv50
         image: docker.io/prom/graphite-exporter:v0.16.0
+      apcupsd-exporter:
+        ip: 10.0.50.101
+        network: macv50
+        image: ghcr.io/thespad/apcupsd_exporter:v0.3.0-spad78
     config:
       loki_uri: http://10.0.50.92:3100
       tempo_uri: http://10.0.50.94:3200
       prometheus_uri: http://10.0.50.96:9090
+      apc_host: 10.0.50.99
       jobs:
         - name: prometheus
           targets: ["localhost:9090"]
@@ -85,8 +90,8 @@ services:
           targets: ["10.0.50.2:9100", "10.0.50.8:9100"]
         - name: podman
           targets: ["10.0.50.2:9882"]
-        - name: windows
-          targets: ["10.0.50.4:9182"]
+        - name: apcups
+          targets: ["10.0.50.101:9162"]
   pki:
     containers:
       step-ca:

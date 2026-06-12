@@ -1,8 +1,8 @@
 ---
-- hosts: all
+- hosts: kvm_hosts
   gather_facts: false
   become: true
   roles:
-    - reverse-proxy
+    # - reverse-proxy
     # - pki
-    # - telemetry
+    - telemetry

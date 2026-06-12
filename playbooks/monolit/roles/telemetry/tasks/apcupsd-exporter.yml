@@ -1,0 +1,38 @@
+---
+- name: "{{ ansible_role_name }}/apcupsd-exporter: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    env:
+      PUID: 1000
+      PGID: 1000
+      TZ: Asia/Baku
+      APC_HOST: "{{ services[ansible_role_name].config.apc_host }}"
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      Requires:
+        - apcupsd.service
+      After:
+        - telemetry.target
+        - apcupsd.service
+    systemd_install:
+      WantedBy:
+        - telemetry.target
+  notify: "SystemD daemon reload"

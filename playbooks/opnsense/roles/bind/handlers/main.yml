@@ -1,6 +1,6 @@
 ---
 - name: reload bind
-  command: /usr/local/sbin/configctl bind reload
+  command: /usr/sbin/service bind reload
 
 - name: wait bind
   wait_for:

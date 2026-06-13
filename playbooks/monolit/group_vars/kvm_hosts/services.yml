@@ -17,10 +17,6 @@ services:
         host: 10.0.50.28
         port: 3000
         include: ["cloudflare"]
-      - hostname: grafana.alakx.com
-        host: 10.0.50.91
-        port: 3000
-        include: ["cloudflare"]
       - hostname: status.alakx.com
         host: 10.0.50.95
         port: 3001

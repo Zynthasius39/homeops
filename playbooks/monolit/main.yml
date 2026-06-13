@@ -3,6 +3,22 @@
   gather_facts: false
   become: true
   roles:
-    # - reverse-proxy
-    # - pki
+    - reverse-proxy
+  tags:
+    - reverse-proxy
+
+- hosts: kvm_hosts
+  gather_facts: false
+  become: true
+  roles:
     - telemetry
+  tags:
+    - telemetry
+
+- hosts: pki_hosts
+  gather_facts: false
+  become: true
+  roles:
+    - pki
+  tags:
+    - pki

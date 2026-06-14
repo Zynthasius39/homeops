@@ -53,6 +53,13 @@
     quadlet_cpus: 2
     quadlet_memory: 512M
 
+- name: "{{ ansible_role_name }}/prometheus-node-exporter"
+  ansible.builtin.include_tasks: "prometheus-node-exporter.yml"
+  vars:
+    quadlet_container_name: prometheus-node-exporter
+    quadlet_cpus: 1
+    quadlet_memory: 128M
+
 - name: "{{ ansible_role_name }}/prometheus-podman-exporter"
   ansible.builtin.include_tasks: "prometheus-podman-exporter.yml"
   vars:

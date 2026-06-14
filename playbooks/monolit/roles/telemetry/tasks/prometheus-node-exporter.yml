@@ -1,21 +1,18 @@
 ---
-- name: "{{ ansible_role_name }}/prometheus-podman-exporter: Generate quadlets"
+- name: "{{ ansible_role_name }}/prometheus-node-exporter: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
-    env:
-      CONTAINER_HOST: unix:///run/podman/podman.sock
-    security_opt:
-        - label=disable
-    user: root
+    command: --path.rootfs=/host
     volume:
-      - "/run/podman/podman.sock:/run/podman/podman.sock"
+      - "/:/host:ro,rslave"
     image: "{{ _quadlet.image }}"
     network: host
     cpus: "{{ _quadlet.cpus }}"
     memory: "{{ _quadlet.memory }}"
     quadlet_options:
+      - "PodmanArgs=--pid=host"
       - "AutoUpdate=registry"
       - |
 

@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/angie"
+- name: "Reverse-proxy/angie"
   ansible.builtin.include_tasks: "angie.yml"
   vars:
     quadlet_container_name: angie

@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/ica/{{ ica }}: Create PKI directories"
+- name: "PKI/ica/{{ ica }}: Create PKI directories"
   ansible.builtin.file:
     path: "{{ item }}"
     owner: "{{ ansible_user }}"
@@ -11,14 +11,14 @@
     - "{{ pki_ica_dir }}/private"
     - "{{ pki_ica_dir }}/csr"
 
-- name: "{{ ansible_role_name }}/ica/{{ ica }}: Generate a private key for CA"
+- name: "PKI/ica/{{ ica }}: Generate a private key for CA"
   community.crypto.openssl_privatekey:
     path: "{{ pki_ica_dir }}/private/ica.key"
     type: ECC
-    mode: 0400
+    mode: "0400"
     curve: secp256r1
 
-- name: "{{ ansible_role_name }}/ica/{{ ica }}: Generate a CA CSR"
+- name: "PKI/ica/{{ ica }}: Generate a CA CSR"
   community.crypto.openssl_csr:
     path: "{{ pki_ica_dir }}/csr/ica.csr"
     privatekey_path: "{{ pki_ica_dir }}/private/ica.key"
@@ -38,7 +38,7 @@
       - cRLSign
     key_usage_critical: true
 
-- name: "{{ ansible_role_name }}/ica/{{ ica }}: Sign the Intermediate CA with the Root CA"
+- name: "PKI/ica/{{ ica }}: Sign the Intermediate CA with the Root CA"
   community.crypto.x509_certificate:
     path: "{{ pki_ica_dir }}/certs/ica.crt"
     csr_path: "{{ pki_ica_dir }}/csr/ica.csr"
@@ -49,8 +49,8 @@
     ownca_path: "{{ pki_root_dir }}/certs/ca.crt"
     ownca_privatekey_path: "{{ pki_root_dir }}/private/ca.key"
 
-- name: "{{ ansible_role_name }}/ica/{{ ica }}: Concatenate certificates into a chain"
-  shell: |
+- name: "PKI/ica/{{ ica }}: Concatenate certificates into a chain"
+  ansible.builtin.shell: |
     cat {{ pki_ica_dir }}/certs/ica.crt {{ pki_dir }}/ca.crt > {{ pki_ica_dir }}/ca-chain.crt
   args:
     creates: "{{ pki_ica_dir }}/ca-chain.crt"

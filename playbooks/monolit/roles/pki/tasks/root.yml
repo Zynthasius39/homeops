@@ -16,7 +16,7 @@
   community.crypto.openssl_privatekey:
     path: "{{ pki_root_dir }}/private/ca.key"
     type: ECC
-    mode: 0400
+    mode: "0400"
     curve: secp384r1
 
 - name: "{{ ansible_role_name }}/root: Generate a CA CSR"

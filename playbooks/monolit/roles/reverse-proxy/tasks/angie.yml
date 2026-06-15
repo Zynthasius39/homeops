@@ -1,13 +1,13 @@
----
-- name: "{{ ansible_role_name }}/angie: Create volume directories"
+- name: "Reverse-proxy/angie: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
   register: volume_dirs
-- name: "{{ ansible_role_name }}/angie: Generate quadlets"
+- name: "Reverse-proxy/angie: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -28,7 +28,6 @@
     quadlet_options:
       - "AutoUpdate=registry"
       - |
-
         {{ _quadlet.__systemd_service }}
         {{ _quadlet.__systemd_unit }}
         {{ _quadlet.__systemd_install.rstrip() }}
@@ -42,46 +41,51 @@
       WantedBy:
         - containers.target
   register: quadlet_gen
-- name: "{{ ansible_role_name }}/angie: Copy etc"
+- name: "Reverse-proxy/angie: Copy etc"
   ansible.builtin.copy:
     src: etc/
     dest: "{{ _quadlet.mount_src[0] | dirname }}"
-    mode: '0644'
-    directory_mode: '0755'
+    mode: "0644"
+    directory_mode: "0755"
   register: copy_etc
-- name: "{{ ansible_role_name }}/angie: Copy angie data"
+- name: "Reverse-proxy/angie: Copy angie data"
   ansible.builtin.copy:
     src: data/
     dest: "{{ _quadlet.data }}"
-    mode: '0644'
-    directory_mode: '0755'
+    mode: "0644"
+    directory_mode: "0755"
   register: copy_data
-
-- name: "{{ ansible_role_name }}/angie: Render default server config"
+- name: "Reverse-proxy/angie: Render default server config"
   ansible.builtin.template:
     src: default_server.conf.j2
     dest: "{{ _quadlet.mount_src[1] }}/default_server.conf"
-    mode: '0644'
+    mode: "0644"
   register: render_default
-
-- name: "{{ ansible_role_name }}/angie: Render proxy host configs"
+- name: "Reverse-proxy/angie: Render proxy host configs"
   ansible.builtin.template:
     src: proxy_host.conf.j2
-    dest: "{{ _quadlet.mount_src[1] }}/{% if proxy_host.hostname is string %}{{ proxy_host.hostname }}{% elif proxy_host.hostname is iterable %}{{ proxy_host.hostname[0] }}{% endif %}.conf"
-    mode: '0644'
+    dest: >
+      {{ _quadlet.mount_src[1] }}/
+      {% if proxy_host.hostname is string %}
+      {{ proxy_host.hostname }}
+      {% elif proxy_host.hostname is iterable %}
+      {{ proxy_host.hostname[0] }}
+      {% endif %}
+      .conf"
+    mode: "0644"
   loop: "{{ services[ansible_role_name].proxy_hosts }}"
   loop_control:
     loop_var: proxy_host
   register: render_proxy
 
-- name: "{{ ansible_role_name }}/angie: Render angie config"
+- name: "Reverse-proxy/angie: Render angie config"
   ansible.builtin.template:
     src: angie.conf.j2
     dest: "{{ _quadlet.mount_src[0] | dirname }}/angie.conf"
-    mode: '0644'
+    mode: "0644"
   register: render_angie
 
-- name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Check if service is running"
+- name: "Reverse-proxy/angie: Check if service is running"
   ansible.builtin.systemd:
     name: "{{ _quadlet.name }}.service"
   register: service_status
@@ -96,7 +100,7 @@
       render_angie
     ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
 
-- name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Restart if service was running"
+- name: "Reverse-proxy/angie: Restart if service was running"
   ansible.builtin.systemd:
     name: "{{ _quadlet.name }}.service"
     state: restarted
@@ -111,6 +115,4 @@
         render_proxy,
         render_angie
       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
-    )
-    and service_status.status is defined
-    and service_status.status.ActiveState == "active"
+    ) and service_status.status is defined and service_status.status.ActiveState == "active"

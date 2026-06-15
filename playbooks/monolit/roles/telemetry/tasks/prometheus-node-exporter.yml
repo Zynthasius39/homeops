@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/prometheus-node-exporter: Generate quadlets"
+- name: "Telemetry/prometheus-node-exporter: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet

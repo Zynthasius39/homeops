@@ -1,12 +1,12 @@
 ---
-- name: "{{ ansible_role_name }}/systemd: telemetry target"
+- name: "Telemetry/systemd: telemetry target"
   ansible.builtin.copy:
     src: systemd/telemetry.target
     dest: /etc/systemd/system
     mode: "0644"
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/loki"
+- name: "Telemetry/loki"
   ansible.builtin.include_tasks: "loki.yml"
   vars:
     quadlet_container_name: loki
@@ -15,7 +15,7 @@
     quadlet_cpus: 2
     quadlet_memory: 512M
 
-- name: "{{ ansible_role_name }}/grafana"
+- name: "Telemetry/grafana"
   ansible.builtin.include_tasks: "grafana.yml"
   vars:
     quadlet_container_name: grafana
@@ -25,7 +25,7 @@
     quadlet_cpus: 2
     quadlet_memory: 512M
 
-- name: "{{ ansible_role_name }}/alloy"
+- name: "Telemetry/alloy"
   ansible.builtin.include_tasks: "alloy.yml"
   vars:
     quadlet_container_name: alloy
@@ -34,7 +34,7 @@
     quadlet_cpus: 2
     quadlet_memory: 512M
 
-- name: "{{ ansible_role_name }}/tempo"
+- name: "Telemetry/tempo"
   ansible.builtin.include_tasks: "tempo.yml"
   vars:
     quadlet_container_name: tempo
@@ -44,7 +44,7 @@
     quadlet_cpus: 2
     quadlet_memory: 512M
 
-- name: "{{ ansible_role_name }}/prometheus"
+- name: "Telemetry/prometheus"
   ansible.builtin.include_tasks: "prometheus.yml"
   vars:
     quadlet_container_name: prometheus
@@ -53,21 +53,21 @@
     quadlet_cpus: 2
     quadlet_memory: 512M
 
-- name: "{{ ansible_role_name }}/prometheus-node-exporter"
+- name: "Telemetry/prometheus-node-exporter"
   ansible.builtin.include_tasks: "prometheus-node-exporter.yml"
   vars:
     quadlet_container_name: prometheus-node-exporter
     quadlet_cpus: 1
     quadlet_memory: 128M
 
-- name: "{{ ansible_role_name }}/prometheus-podman-exporter"
+- name: "Telemetry/prometheus-podman-exporter"
   ansible.builtin.include_tasks: "prometheus-podman-exporter.yml"
   vars:
     quadlet_container_name: prometheus-podman-exporter
     quadlet_cpus: 1
     quadlet_memory: 128M
 
-- name: "{{ ansible_role_name }}/graphite-exporter"
+- name: "Telemetry/graphite-exporter"
   ansible.builtin.include_tasks: "graphite-exporter.yml"
   vars:
     quadlet_container_name: graphite-exporter
@@ -76,7 +76,7 @@
     quadlet_cpus: 1
     quadlet_memory: 128M
 
-- name: "{{ ansible_role_name }}/uptime-kuma"
+- name: "Telemetry/uptime-kuma"
   ansible.builtin.include_tasks: "uptime-kuma.yml"
   vars:
     quadlet_container_name: uptime-kuma
@@ -85,7 +85,7 @@
     quadlet_cpus: 1
     quadlet_memory: 512M
 
-- name: "{{ ansible_role_name }}/apcupsd-exporter"
+- name: "Telemetry/apcupsd-exporter"
   ansible.builtin.include_tasks: "apcupsd-exporter.yml"
   vars:
     quadlet_container_name: apcupsd-exporter

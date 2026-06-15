@@ -1,13 +1,14 @@
 ---
-- name: "{{ ansible_role_name }}/loki: Create volume directories"
+- name: "Telemetry/loki: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/loki: Generate quadlets"
+- name: "Telemetry/loki: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -39,7 +40,7 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/loki: Copy etc"
+- name: "Telemetry/loki: Copy etc"
   ansible.builtin.copy:
     src: etc/loki-config.yml
     dest: "{{ _quadlet.mount_src[0] | dirname }}"

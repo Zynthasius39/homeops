@@ -1,24 +1,25 @@
 ---
-- block:
-    - name: "{{ ansible_role_name }}/passphrase: Ask for passphrase"
+- name: "USB-Vault/passphrase: Define passphrase"
+  when: usb_passphrase is not defined
+  block:
+    - name: "USB-Vault/passphrase: Ask for passphrase"
       ansible.builtin.pause:
         prompt: "Enter USB Passphrase"
         echo: false
       register: pass_one
 
-    - name: "{{ ansible_role_name }}/passphrase: Ask for passphrase (confirmation)"
+    - name: "USB-Vault/passphrase: Ask for passphrase (confirmation)"
       ansible.builtin.pause:
         prompt: "Confirm USB Passphrase"
         echo: false
       register: pass_two
 
-    - name: "{{ ansible_role_name }}/passphrase: Verify passphrases match"
+    - name: "USB-Vault/passphrase: Verify passphrases match"
       ansible.builtin.assert:
         that:
           - pass_one.user_input == pass_two.user_input
         fail_msg: "Passphrases do not match! Please run the playbook again."
 
-    - name: "{{ ansible_role_name }}/passphrase: Set the passphrase fact"
-      set_fact:
+    - name: "USB-Vault/passphrase: Set the passphrase fact"
+      ansible.builtin.set_fact:
         usb_passphrase: "{{ pass_one.user_input }}"
-  when: usb_passphrase is not defined

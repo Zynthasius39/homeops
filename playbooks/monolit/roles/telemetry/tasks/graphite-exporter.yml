@@ -1,13 +1,14 @@
 ---
-- name: "{{ ansible_role_name }}/graphite-exporter: Create volume directories"
+- name: "Telemetry/graphite-exporter: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/graphite-exporter: Generate quadlets"
+- name: "Telemetry/graphite-exporter: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -40,7 +41,7 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/graphite-exporter: Copy etc"
+- name: "Telemetry/graphite-exporter: Copy etc"
   ansible.builtin.copy:
     src: etc/truenas-mappings.yml
     dest: "{{ _quadlet.mount_src[0] | dirname }}"

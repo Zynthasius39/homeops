@@ -1,13 +1,14 @@
 ---
-- name: "{{ ansible_role_name }}/alloy: Create volume directories"
+- name: "Telemetry/alloy: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/alloy: Generate quadlets"
+- name: "Telemetry/alloy: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -40,7 +41,7 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/alloy: Render etc"
+- name: "Telemetry/alloy: Render etc"
   ansible.builtin.template:
     src: config.alloy.j2
     dest: "{{ _quadlet.mount_src[0] }}"

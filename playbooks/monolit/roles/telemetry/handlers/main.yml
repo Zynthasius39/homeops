@@ -1,11 +1,11 @@
 ---
 - name: "SystemD daemon reload"
   ansible.builtin.systemd_service:
-      daemon_reload: true
+    daemon_reload: true
   notify: "SystemD enable telemetry target"
 
 - name: "SystemD enable telemetry target"
-  ansible.builtin.command:
-    cmd: /usr/bin/systemctl enable telemetry.target
-    creates: /etc/systemd/system/containers.target.wants/telemetry.target
+  ansible.builtin.service:
+    state: enabled
+    name: telemetry.target
   listen: "SystemD daemon reload"

@@ -1,20 +1,22 @@
 ---
-- name: "{{ ansible_role_name }}/grafana: Create volume directories"
+- name: "Telemetry/grafana: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/grafana: Change volume permissions"
+- name: "Telemetry/grafana: Change volume permissions"
   ansible.builtin.file:
     path: "{{ _quadlet.mount_src[0] | dirname }}"
     state: directory
     owner: "472"
     group: "0"
+    mode: "0755"
 
-- name: "{{ ansible_role_name }}/grafana: Generate quadlets"
+- name: "Telemetry/grafana: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -47,7 +49,7 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/grafana: Render etc"
+- name: "Telemetry/grafana: Render etc"
   ansible.builtin.template:
     src: grafana-datasources.yaml.j2
     dest: "{{ _quadlet.mount_src[1] }}"

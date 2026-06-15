@@ -3,7 +3,7 @@
   community.crypto.openssl_privatekey:
     path: "{{ pki_ica_dir }}/private/{{ server.common_name }}.key"
     type: ECC
-    mode: 0400
+    mode: "0400"
     curve: secp256r1
 
 - name: "{{ ansible_role_name }}/ica/server: Generate a CSR"

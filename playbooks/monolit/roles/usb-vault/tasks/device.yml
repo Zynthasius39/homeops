@@ -1,22 +1,24 @@
 ---
-- block:
-    - name: "{{ ansible_role_name }}/device: Ask for device path"
+- name: "USB-Vault/device: Define device path"
+  when: usb_device is not defined and usb_uuid is not defined
+  block:
+    - name: "USB-Vault/device: Ask for device path"
       ansible.builtin.pause:
         prompt: "Enter USB path"
       register: usb_path
 
-    - name: "{{ ansible_role_name }}/device: Set the USB device as fact"
-      set_fact:
+    - name: "USB-Vault/device: Set the USB device as fact"
+      ansible.builtin.set_fact:
         usb_device: "{{ usb_path.user_input }}"
-  when: usb_device is not defined and usb_uuid is not defined
 
-- block:
-    - name: "{{ ansible_role_name }}/device: Ask for mount path"
+- name: "USB-Vault/device: Define mount path"
+  when: usb_mount_dir is not defined
+  block:
+    - name: "USB-Vault/device: Ask for mount path"
       ansible.builtin.pause:
         prompt: "Enter a mount path for USB Vault"
       register: usb_mount
 
-    - name: "{{ ansible_role_name }}/device: Set the mount path as fact"
-      set_fact:
+    - name: "USB-Vault/device: Set the mount path as fact"
+      ansible.builtin.set_fact:
         usb_device: "{{ usb_mount.user_input }}"
-  when: usb_mount_dir is not defined

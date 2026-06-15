@@ -1,13 +1,14 @@
 ---
-- name: "{{ ansible_role_name }}/prometheus: Create volume directories"
+- name: "Telemetry/prometheus: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "{{ ansible_role_name }}/prometheus: Generate quadlets"
+- name: "Telemetry/prometheus: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -44,7 +45,7 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/prometheus: Render etc"
+- name: "Telemetry/prometheus: Render etc"
   ansible.builtin.template:
     src: prometheus.yaml.j2
     dest: "{{ _quadlet.mount_src[0] }}"

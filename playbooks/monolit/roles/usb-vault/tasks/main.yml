@@ -1,33 +1,33 @@
 ---
-- name: "{{ ansible_role_name }}/unlock: Opens the LUKS container using a vault-encrypted passphrase."
+- name: "USB-Vault/unlock: Opens the LUKS container using a vault-encrypted passphrase."
   ansible.builtin.include_tasks:
     file: unlock.yml
     apply:
       tags: [usb_unlock]
   tags: [usb_unlock]
 
-- name: "{{ ansible_role_name }}/lock: Closes the LUKS container and wipes the mapping."
+- name: "USB-Vault/lock: Closes the LUKS container and wipes the mapping."
   ansible.builtin.include_tasks:
     file: lock.yml
     apply:
       tags: [usb_lock]
   tags: [usb_lock]
 
-- name: "{{ ansible_role_name }}/unmount: Safely unmounts the filesystem."
+- name: "USB-Vault/unmount: Safely unmounts the filesystem."
   ansible.builtin.include_tasks:
     file: unmount.yml
     apply:
       tags: [usb_unmount]
   tags: [usb_unmount]
 
-- name: "{{ ansible_role_name }}/all: Performs both unlock and mount"
+- name: "USB-Vault/all: Performs both unlock and mount"
   ansible.builtin.include_tasks:
     file: all.yml
     apply:
       tags: [usb_all]
   tags: [usb_all]
 
-- name: "{{ ansible_role_name }}/new: Configure a new USB Vault"
+- name: "USB-Vault/new: Configure a new USB Vault"
   ansible.builtin.include_tasks:
     file: new.yml
     apply:

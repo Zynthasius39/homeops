@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/prometheus-podman-exporter: Generate quadlets"
+- name: "Telemetry/prometheus-podman-exporter: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -7,7 +7,7 @@
     env:
       CONTAINER_HOST: unix:///run/podman/podman.sock
     security_opt:
-        - label=disable
+      - label=disable
     user: root
     volume:
       - "/run/podman/podman.sock:/run/podman/podman.sock"

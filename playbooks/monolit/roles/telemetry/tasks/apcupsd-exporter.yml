@@ -1,5 +1,5 @@
 ---
-- name: "{{ ansible_role_name }}/apcupsd-exporter: Generate quadlets"
+- name: "Telemetry/apcupsd-exporter: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet

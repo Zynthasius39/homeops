@@ -1,20 +1,22 @@
 ---
-- name: "{{ ansible_role_name }}/tempo: Create volume directories"
+- name: "Telemetry/tempo: Create volume directories"
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
+    mode: "0755"
   loop: "{{ _quadlet.mount_src[:1] }}"
 
-- name: "{{ ansible_role_name }}/tempo: Change volume permissions"
+- name: "Telemetry/tempo: Change volume permissions"
   ansible.builtin.file:
     path: "{{ _quadlet.mount_src[1] | dirname }}"
     state: directory
     owner: "10001"
     group: "10001"
+    mode: "0755"
 
-- name: "{{ ansible_role_name }}/tempo: Generate quadlets"
+- name: "Telemetry/tempo: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
@@ -48,7 +50,7 @@
         - telemetry.target
   notify: "SystemD daemon reload"
 
-- name: "{{ ansible_role_name }}/tempo: Copy etc"
+- name: "Telemetry/tempo: Copy etc"
   ansible.builtin.copy:
     src: etc/tempo.yaml
     dest: "{{ _quadlet.mount_src[0] }}"

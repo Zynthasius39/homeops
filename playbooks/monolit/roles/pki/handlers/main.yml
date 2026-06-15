@@ -1,0 +1,4 @@
+- name: "PKI: Reload Systemd Daemon"
+  ansible.builtin.systemd_service:
+      daemon_reload: true
+  when: quadlet_task.changed

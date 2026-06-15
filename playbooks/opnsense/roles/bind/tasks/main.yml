@@ -1,43 +1,44 @@
 ---
-- name: "Install BIND"
+- name: Install BIND
   ansible.builtin.package:
     name: bind920
     state: present
   register: install_bind
+  notify: Start and enable service name
 
-- name: "Start and enable service named"
-  ansible.builtin.service:
-    name: named
-    state: started
-  when: install_bind.changed
-
-- block:
-    - name: "Copy etc files"
-      ansible.builtin.copy:
-        src: etc/
-        dest: /usr/local/etc/namedb
-
-    - name: "Render zone configurations"
-      ansible.builtin.template:
-        src: zone.conf
-        dest: "/usr/local/etc/namedb/named.conf.d/{{ zone.name }}.conf"
-      loop: "{{ zones }}"
-      loop_control:
-        loop_var: zone
-
-    - name: "Render zone database files"
-      ansible.builtin.template:
-        src: zone.db
-        dest: "/usr/local/etc/namedb/primary/db-{{ zone.name }}"
-        force: no
-      loop: "{{ zones }}"
-      loop_control:
-        loop_var: zone
-
-    - name: "Render named configuration"
-      ansible.builtin.template:
-        src: named.conf
-        dest: /usr/local/etc/namedb/named.conf
+- name: Install configuration files
   notify:
     - reload bind
     - wait bind
+  block:
+    - name: Copy etc files
+      ansible.builtin.copy:
+        src: etc/
+        dest: /usr/local/etc/namedb
+        directory_mode: "0755"
+        mode: "0644"
+
+    - name: Render zone configurations
+      ansible.builtin.template:
+        src: zone.conf
+        dest: "/usr/local/etc/namedb/named.conf.d/{{ zone.name }}.conf"
+        mode: "0644"
+      loop: "{{ zones }}"
+      loop_control:
+        loop_var: zone
+
+    - name: Render zone database files
+      ansible.builtin.template:
+        src: zone.db
+        dest: "/usr/local/etc/namedb/primary/db-{{ zone.name }}"
+        force: false
+        mode: "0644"
+      loop: "{{ zones }}"
+      loop_control:
+        loop_var: zone
+
+    - name: Render named configuration
+      ansible.builtin.template:
+        src: named.conf
+        dest: /usr/local/etc/namedb/named.conf
+        mode: "0644"

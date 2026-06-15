@@ -1,6 +1,8 @@
 ---
-- block:
-    - name: "{{ ansible_role_name }}/step-ca: Look for existing context"
+- name: "PKI/step-ca: Install Step-CA"
+  become: true
+  block:
+    - name: "PKI/step-ca: Look for existing context"
       ansible.builtin.stat:
         path: "{{ item }}"
       loop:
@@ -11,26 +13,27 @@
         - "{{ _quadlet.mount_src[0] }}config/defaults.json"
       register: file_checks
 
-    - name: "{{ ansible_role_name }}/step-ca: Define helper variable for file counts"
+    - name: "PKI/step-ca: Define helper variable for file counts"
       ansible.builtin.set_fact:
         existing_files: "{{ file_checks.results | map(attribute='stat.exists') | select('true') | list | length }}"
 
-    - name: "{{ ansible_role_name }}/step-ca: Create volume directories"
+    - name: "PKI/step-ca: Create volume directories"
       ansible.builtin.file:
         path: "{{ item | dirname }}"
         state: directory
         owner: 1000  # Step-ca User
         group: 1000  # Step-ca Group
+        mode: "0755"
       loop: "{{ _quadlet.mount_src }}"
 
-    - name: "{{ ansible_role_name }}/step-ca: Render init.sh"
+    - name: "PKI/step-ca: Render init.sh"
       ansible.builtin.template:
         src: init.sh.j2
         dest: "{{ _quadlet.data }}/init.sh"
         mode: '0755'
       register: init_script
 
-    - name: "{{ ansible_role_name }}/step-ca: Step-ca Init"
+    - name: "PKI/step-ca: Step-ca Init"
       containers.podman.podman_container:
         name: "{{ _quadlet.name }}"
         state: started
@@ -53,7 +56,7 @@
         rm: true
       when: existing_files | int != 5 or init_script.changed
 
-    - name: "{{ ansible_role_name }}/step-ca: Generate quadlets"
+    - name: "PKI/step-ca: Generate quadlets"
       containers.podman.podman_container:
         name: "{{ _quadlet.name }}"
         state: quadlet
@@ -88,20 +91,15 @@
           WantedBy:
             - containers.target
       register: quadlet_task
+      notify: "PKI: Reload Systemd Daemon"
 
-    - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Reload Systemd Daemon"
-      ansible.builtin.systemd_service:
-          daemon_reload: true
-      when: quadlet_task.changed
-
-    - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Check if service is running"
+    - name: "PKI/step-ca: Check if service is running"
       ansible.builtin.systemd:
         name: "{{ _quadlet.name }}.service"
       register: service_status
 
-    - name: "{{ ansible_role_name }}/{{ _quadlet.name }}: Restart if service was running"
+    - name: "PKI/step-ca: Restart if service was running"
       ansible.builtin.systemd:
         name: "{{ _quadlet.name }}.service"
         state: restarted
       when: service_status.status.ActiveState == "active"
-  become: true

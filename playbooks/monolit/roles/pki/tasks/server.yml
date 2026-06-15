@@ -1,32 +1,32 @@
 ---
-- name: "{{ ansible_role_name }}/ica/server: Generate a private key for the certificate"
+- name: "PKI/ica/server: Generate a private key for the certificate"
   community.crypto.openssl_privatekey:
-    path: "{{ pki_ica_dir }}/private/{{ server.common_name }}.key"
+    path: "{{ pki_ica_dir }}/private/{{ server.cn }}.key"
     type: ECC
     mode: "0400"
     curve: secp256r1
 
-- name: "{{ ansible_role_name }}/ica/server: Generate a CSR"
+- name: "PKI/ica/server: Generate a CSR"
   community.crypto.openssl_csr:
-    path: "{{ pki_ica_dir }}/csr/{{ server.common_name }}.csr"
-    privatekey_path: "{{ pki_ica_dir }}/private/{{ server.common_name }}.key"
-    common_name: "{{ server.common_name }}"
+    path: "{{ pki_ica_dir }}/csr/{{ server.cn }}.csr"
+    privatekey_path: "{{ pki_ica_dir }}/private/{{ server.cn }}.key"
+    common_name: "{{ server.cn }}"
     country_name: "{{ pki_country_name }}"
     locality_name: "{{ pki_locality_name }}"
     organization_name: "{{ pki_organization_name }}"
-    subject_alt_name: "{{ server.subject_alt_name | default(omit) }}"
-    basic_constraints: 
+    subject_alt_name: "{{ server.san | default(omit) }}"
+    basic_constraints:
       - CA:FALSE
     key_usage:
       - digitalSignature
       - keyEncipherment
     key_usage_critical: true
 
-- name: "{{ ansible_role_name }}/ica/server: Sign the certificate with the Intermediate CA"
+- name: "PKI/ica/server: Sign the certificate with the Intermediate CA"
   community.crypto.x509_certificate:
-    path: "{{ pki_ica_dir }}/certs/{{ server.common_name }}.crt"
-    csr_path: "{{ pki_ica_dir }}/csr/{{ server.common_name }}.csr"
-    privatekey_path: "{{ pki_ica_dir }}/private/{{ server.common_name }}.key"
+    path: "{{ pki_ica_dir }}/certs/{{ server.cn }}.crt"
+    csr_path: "{{ pki_ica_dir }}/csr/{{ server.cn }}.csr"
+    privatekey_path: "{{ pki_ica_dir }}/private/{{ server.cn }}.key"
     provider: ownca
     ownca_not_after: "+365d"
     ownca_digest: sha256

@@ -8,6 +8,7 @@
     kubeconfig: "{{ kubeconfig }}"
     values: "{{ cilium_config | from_yaml }}"
   register: cilium_install
+  notify: Wait for Cilium to be ready
 
 - name: Restart Cilium operator
   kubernetes.core.k8s:
@@ -42,14 +43,3 @@
   when:
     - cilium_install.changed
     - cilium_install.status.revision | int > 1
-
-- name: Wait for Cilium to be ready
-  ansible.builtin.command: cilium status --wait --wait-duration 120s
-  environment:
-    KUBECONFIG: "{{ kubeconfig }}"
-  register: cilium_status
-  retries: 5
-  delay: 10
-  until: cilium_status.rc == 0
-  changed_when: false
-  when: cilium_install.changed

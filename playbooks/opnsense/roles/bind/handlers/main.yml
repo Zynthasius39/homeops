@@ -1,11 +1,18 @@
 ---
-- name: reload bind
-  command: /usr/sbin/service bind reload
+- name: Reload bind
+  ansible.builtin.service:
+    state: reloaded
+    name: bind
 
-- name: wait bind
-  wait_for:
+- name: Wait bind
+  ansible.builtin.wait_for:
     host: "{{ ansible_host }}"
     port: 53
     state: started
     delay: 2
     timeout: 15
+
+- name: Start and enable service name
+  ansible.builtin.service:
+    name: named
+    state: started

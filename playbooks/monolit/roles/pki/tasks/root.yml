@@ -1,10 +1,11 @@
 ---
-- name: "{{ ansible_role_name }}/root: Create PKI directories"
+- name: "PKI/root: Create PKI directories"
   ansible.builtin.file:
     path: "{{ item }}"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     state: directory
+    mode: "0755"
   become: true
   loop:
     - "{{ pki_root_dir }}/certs"
@@ -12,14 +13,14 @@
     - "{{ pki_root_dir }}/csr"
     - "{{ pki_dir }}"
 
-- name: "{{ ansible_role_name }}/root: Generate a private key for CA"
+- name: "PKI/root: Generate a private key for CA"
   community.crypto.openssl_privatekey:
     path: "{{ pki_root_dir }}/private/ca.key"
     type: ECC
     mode: "0400"
     curve: secp384r1
 
-- name: "{{ ansible_role_name }}/root: Generate a CA CSR"
+- name: "PKI/root: Generate a CA CSR"
   community.crypto.openssl_csr:
     path: "{{ pki_root_dir }}/csr/ca.csr"
     privatekey_path: "{{ pki_root_dir }}/private/ca.key"
@@ -28,7 +29,7 @@
     locality_name: "{{ pki_locality_name }}"
     organization_name: "{{ pki_organization_name }}"
     use_common_name_for_san: false
-    basic_constraints: 
+    basic_constraints:
       - CA:TRUE
     basic_constraints_critical: true
     key_usage:
@@ -36,7 +37,7 @@
       - cRLSign
     key_usage_critical: true
 
-- name: "{{ ansible_role_name }}/root: Self-sign the CA Certificate"
+- name: "PKI/root: Self-sign the CA Certificate"
   community.crypto.x509_certificate:
     path: "{{ pki_root_dir }}/certs/ca.crt"
     csr_path: "{{ pki_root_dir }}/csr/ca.csr"
@@ -45,8 +46,9 @@
     selfsigned_not_after: "+7300d"
     selfsigned_digest: sha384
 
-- name: "{{ ansible_role_name }}/ica: Copy the Root CA to the PKI directory"
+- name: "PKI/ica: Copy the Root CA to the PKI directory"
   ansible.builtin.copy:
     src: "{{ pki_root_dir }}/certs/ca.crt"
     dest: "{{ pki_dir }}/ca.crt"
     remote_src: true
+    mode: "0644"

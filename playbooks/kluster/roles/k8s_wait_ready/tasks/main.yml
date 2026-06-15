@@ -1,12 +1,15 @@
 ---
-- ansible.builtin.slurp:
+- name: "Read kubeconfig file"
+  ansible.builtin.slurp:
     src: "{{ kubeconfig }}"
   register: _kubeconfig_raw
 
-- ansible.builtin.set_fact:
+- name: "Decode kubeconfig content"
+  ansible.builtin.set_fact:
     _kubeconfig: "{{ _kubeconfig_raw.content | b64decode | from_yaml }}"
 
-- ansible.builtin.set_fact:
+- name: "Extract current kubeconfig user credentials"
+  ansible.builtin.set_fact:
     _kube_user: >-
       {{
         _kubeconfig.users
@@ -16,23 +19,27 @@
         | map(attribute='user') | first
       }}
 
-- ansible.builtin.tempfile:
+- name: "Create temporary file for client certificate"
+  ansible.builtin.tempfile:
     suffix: ".crt"
   register: _tmp_cert
   changed_when: false
 
-- ansible.builtin.tempfile:
+- name: "Create temporary file for client key"
+  ansible.builtin.tempfile:
     suffix: ".key"
   register: _tmp_key
   changed_when: false
 
-- ansible.builtin.copy:
+- name: "Write client certificate to temporary file"
+  ansible.builtin.copy:
     content: "{{ _kube_user['client-certificate-data'] | b64decode }}"
     dest: "{{ _tmp_cert.path }}"
     mode: "0600"
   changed_when: false
 
-- ansible.builtin.copy:
+- name: "Write client key to temporary file"
+  ansible.builtin.copy:
     content: "{{ _kube_user['client-key-data'] | b64decode }}"
     dest: "{{ _tmp_key.path }}"
     mode: "0600"
@@ -59,7 +66,7 @@
     _kubeapi_readyz is failed and
     _kubeapi_readyz.attempts | default(0) >= (kubeapi_wait_timeout / kubeapi_wait_delay) | int
 
-- name: "kubeapi /readyz is healthy"
+- name: "KubeAPI /readyz is healthy"
   ansible.builtin.debug:
     msg: >
       kube-apiserver is ready after {{ _kubeapi_readyz.attempts | default(1) }}

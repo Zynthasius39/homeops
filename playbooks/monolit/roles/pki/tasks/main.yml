@@ -1,5 +1,5 @@
 ---
-- name: "USB-Vault/root: Unlock the USB Vault"
+- name: "PKI/root: Unlock the USB Vault"
   ansible.builtin.include_role:
     name: usb-vault
     tasks_from: unlock.yml
@@ -8,21 +8,21 @@
   when: not (ansible_facts["mounts"] | selectattr('mount', 'equalto', usb_mount_dir) | list | length > 0)
   tags: [pki_status, pki_root, pki_intermediate, pki_acme, pki_all]
 
-- name: "USB-Vault/status: Check expiration and health"
+- name: "PKI/status: Check expiration and health"
   ansible.builtin.include_tasks:
     file: status.yml
     apply:
       tags: [pki_status, pki_all]
   tags: [pki_status, pki_all]
 
-- name: "USB-Vault/root: Root CA lifecycle"
+- name: "PKI/root: Root CA lifecycle"
   ansible.builtin.include_tasks:
     file: root.yml
     apply:
       tags: [pki_root, pki_acme, pki_all]
   tags: [pki_root, pki_acme, pki_all]
 
-- name: "USB-Vault/ica: Intermediate CA lifecycle"
+- name: "PKI/ica: Intermediate CA lifecycle"
   ansible.builtin.include_tasks:
     file: intermediate.yml
     apply:
@@ -35,7 +35,7 @@
     loop_var: ica
   tags: [pki_intermediate, pki_acme, pki_all]
 
-- name: "USB-Vault/step-ca: Infrastructure deployment"
+- name: "PKI/step-ca: Infrastructure deployment"
   ansible.builtin.include_tasks:
     file: step-ca.yml
     apply:
@@ -49,7 +49,7 @@
     quadlet_memory: 256M
   tags: [pki_acme, pki_all]
 
-- name: "USB-Vault/server: Server certificate lifecycle"
+- name: "PKI/server: Server certificate lifecycle"
   ansible.builtin.include_tasks:
     file: server.yml
     apply:
@@ -57,7 +57,18 @@
   vars:
     ica: infra
   loop:
-    - common_name: argocd.naquadah.alak
+    - cn: opn.home.alak
+      san:
+        - "IP:10.0.10.1"
+        - "IP:10.0.16.1"
+        - "IP:10.0.50.1"
+        - "IP:10.0.100.1"
+    - cn: nas.home.alak
+      san:
+        - "IP:10.0.10.3"
+        - "IP:10.0.50.3"
+    - cn: git.alakx.com
+    - cn: argocd.naquadah.alak
   loop_control:
     loop_var: server
   tags: [pki_server, pki_all]

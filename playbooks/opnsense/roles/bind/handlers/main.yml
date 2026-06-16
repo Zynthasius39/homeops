@@ -1,8 +1,8 @@
 ---
 - name: Reload bind
   ansible.builtin.service:
+    name: named
     state: reloaded
-    name: bind
 
 - name: Wait bind
   ansible.builtin.wait_for:

@@ -39,7 +39,7 @@ http {
   ssl_certificate     $acme_cert_stepca;
   ssl_certificate_key $acme_cert_key_stepca;
 
-  include /etc/angie/http.d/include/log-proxy.conf;
+  include /etc/angie/conf/http.d/include/log-proxy.conf;
 
   map $host $forward_scheme {
     default http;
@@ -69,5 +69,9 @@ http {
     default $scheme;
   }
 
-  include /etc/angie/http.d/*.conf;
+  include /etc/angie/conf/http.d/*.conf;
+}
+
+stream {
+  include /etc/angie/conf/stream.d/*.conf;
 }

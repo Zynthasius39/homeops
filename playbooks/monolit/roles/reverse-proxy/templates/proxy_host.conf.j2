@@ -36,11 +36,11 @@ server {
 
 {% if proxy_host.include is defined %}
 {% for i in proxy_host.include %}
-  include http.d/include/{{ i }}.conf;
+  include conf/http.d/include/{{ i }}.conf;
 {% endfor %}
 {% endif %}
 
   location / {
-    include http.d/include/proxy.conf;
+    include conf/http.d/include/proxy.conf;
   }
 }

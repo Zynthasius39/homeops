@@ -9,6 +9,7 @@
   become: true
   loop:
     - "{{ pki_ica_dir }}/certs"
+    - "{{ pki_ica_dir }}/bundles"
     - "{{ pki_ica_dir }}/private"
     - "{{ pki_ica_dir }}/csr"
 

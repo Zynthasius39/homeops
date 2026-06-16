@@ -1,12 +1,12 @@
 ---
-- name: "PKI/ica/server: Generate a private key for the certificate"
+- name: "PKI/server: Generate a private key for the certificate"
   community.crypto.openssl_privatekey:
     path: "{{ pki_ica_dir }}/private/{{ server.cn }}.key"
     type: ECC
     mode: "0400"
     curve: secp256r1
 
-- name: "PKI/ica/server: Generate a CSR"
+- name: "PKI/server: Generate a CSR"
   community.crypto.openssl_csr:
     path: "{{ pki_ica_dir }}/csr/{{ server.cn }}.csr"
     privatekey_path: "{{ pki_ica_dir }}/private/{{ server.cn }}.key"
@@ -24,7 +24,7 @@
     extended_key_usage:
       - serverAuth
 
-- name: "PKI/ica/server: Sign the certificate with the Intermediate CA"
+- name: "PKI/server: Sign the certificate with the Intermediate CA"
   community.crypto.x509_certificate:
     path: "{{ pki_ica_dir }}/certs/{{ server.cn }}.crt"
     csr_path: "{{ pki_ica_dir }}/csr/{{ server.cn }}.csr"
@@ -34,3 +34,9 @@
     ownca_digest: sha256
     ownca_path: "{{ pki_ica_dir }}/certs/ica.crt"
     ownca_privatekey_path: "{{ pki_ica_dir }}/private/ica.key"
+
+- name: "PKI/server: Concatenate certificates into a bundle"
+  ansible.builtin.shell: |
+    cat {{ pki_ica_dir }}/certs/{{ server.cn }}.crt {{ pki_ica_dir }}/certs/ica.crt > {{ pki_ica_dir }}/bundles/{{ server.cn }}.crt
+  args:
+    creates: "{{ pki_ica_dir }}/bundles/{{ server.cn }}.crt"

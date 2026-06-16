@@ -5,7 +5,7 @@
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
     mode: "0755"
-  loop: "{{ _quadlet.mount_src[:1] }}"
+  loop: "{{ _quadlet.mount_src[:-1] }}"
   register: volume_dirs
 
 - name: "Reverse-proxy/angie: Generate quadlets"
@@ -15,7 +15,7 @@
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
     volume:
       - "{{ _quadlet.mount_src[0] }}:/etc/angie/angie.conf:Z"
-      - "{{ _quadlet.mount_src[1] }}:/etc/angie/http.d:Z"
+      - "{{ _quadlet.mount_src[1] }}:/etc/angie/conf:Z"
       - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
       - "{{ _quadlet.mount_src[3] }}:/usr/share/angie/cdn:Z"
       - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
@@ -45,9 +45,6 @@
   register: quadlet_gen
   notify: "SystemD daemon reload"
 
-- name: "Run notified handlers now"
-  ansible.builtin.meta: flush_handlers
-
 - name: "Reverse-proxy/angie: Copy etc"
   ansible.builtin.copy:
     src: etc/
@@ -67,20 +64,20 @@
 - name: "Reverse-proxy/angie: Render default server config"
   ansible.builtin.template:
     src: default_server.conf.j2
-    dest: "{{ _quadlet.mount_src[1] }}/default_server.conf"
+    dest: "{{ _quadlet.mount_src[1] }}http.d/default_server.conf"
     mode: "0644"
   register: render_default
 
 - name: "Reverse-proxy/angie: Render proxy host configs"
   ansible.builtin.template:
     src: proxy_host.conf.j2
-    dest: >
-      {{ _quadlet.mount_src[1] }}/
-      {% if proxy_host.hostname is string %}
-      {{ proxy_host.hostname }}
-      {% elif proxy_host.hostname is iterable %}
-      {{ proxy_host.hostname[0] }}
-      {% endif %}
+    dest: "\
+      {{ _quadlet.mount_src[1] }}http.d/\
+      {% if proxy_host.hostname is string %}\
+      {{ proxy_host.hostname }}\
+      {% elif proxy_host.hostname is iterable %}\
+      {{ proxy_host.hostname[0] }}\
+      {% endif %}\
       .conf"
     mode: "0644"
   loop: "{{ services[ansible_role_name].proxy_hosts }}"
@@ -94,6 +91,9 @@
     dest: "{{ _quadlet.mount_src[0] | dirname }}/angie.conf"
     mode: "0644"
   register: render_angie
+
+- name: "Run notified handlers now"
+  ansible.builtin.meta: flush_handlers
 
 - name: "Reverse-proxy/angie: Check if service is running"
   ansible.builtin.systemd:
@@ -111,7 +111,7 @@
     ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
 
 - name: "Reverse-proxy/angie: Restart if service was running"
-  ansible.builtin.systemd:
+  ansible.builtin.service:
     name: "{{ _quadlet.name }}.service"
     state: restarted
   when: >
@@ -126,3 +126,20 @@
         render_angie
       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
     ) and service_status.status is defined and service_status.status.ActiveState == "active"
+
+# - name: "Reverse-proxy/angie: Reload if service was running"
+#   containers.podman.podman_container_exec:
+#     name: "{{ _quadlet.name }}"
+#     command: angie -s reload
+#   when: >
+#     (
+#       [
+#         volume_dirs,
+#         quadlet_gen,
+#         copy_etc,
+#         copy_data,
+#         render_default,
+#         render_proxy,
+#         render_angie
+#       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+#     ) and service_status.status is defined and service_status.status.ActiveState == "active"

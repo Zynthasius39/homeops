@@ -8,8 +8,8 @@
 
 - name: Install configuration files
   notify:
-    - reload bind
-    - wait bind
+    - Reload bind
+    - Wait bind
   block:
     - name: Copy etc files
       ansible.builtin.copy:

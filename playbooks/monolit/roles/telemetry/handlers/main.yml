@@ -4,8 +4,9 @@
     daemon_reload: true
   notify: "SystemD enable telemetry target"
 
-- name: "SystemD enable telemetry target"
+- name: "SystemD enable and start telemetry target"
   ansible.builtin.service:
-    state: enabled
+    state: started
+    enabled: true
     name: telemetry.target
   listen: "SystemD daemon reload"

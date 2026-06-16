@@ -9,7 +9,9 @@ $TTL 86400  ; 1 day
             NS  localhost.
 $TTL 3600  ; 1 hour
 $ORIGIN alakx.com
-root        A  10.0.10.1
-mc          A  10.0.10.1
-;cloud       A  10.0.50.23
-;grafana     A  10.0.50.23
+root        A   10.0.10.1
+mc          A   10.0.10.1
+git         A   10.0.50.23
+ssh-git     A   10.0.50.31
+; cloud       A  10.0.50.23
+; grafana     A  10.0.50.23

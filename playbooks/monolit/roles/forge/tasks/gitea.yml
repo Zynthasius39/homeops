@@ -1,0 +1,54 @@
+---
+- name: "Forge/gitea: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "1000"  # Gitea User
+    group: "1000"  # Gitea Group
+    mode: "0755"
+  loop: "{{ _quadlet.mount_src }}"
+
+- name: "Telemetry/loki: Copy gitea files"
+  ansible.builtin.copy:
+    src: gitea/
+    dest: "{{ _quadlet.mount_src[0] | dirname }}/gitea"
+    owner: "1000"  # Gitea User
+    group: "1000"  # Gitea Group
+    mode: "0644"
+    directory_mode: "0755"
+
+- name: "Forge/gitea: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/data:Z"
+      - "/etc/localtime:/etc/localtime:ro"
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    env:
+      USER_UID: "1000"
+      USER_GID: "1000"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - forge.target
+    systemd_install:
+      WantedBy:
+        - forge.target
+  notify: "SystemD daemon reload"

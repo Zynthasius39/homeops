@@ -1,0 +1,16 @@
+---
+- name: "Forge/systemd: forge target"
+  ansible.builtin.copy:
+    src: systemd/forge.target
+    dest: /etc/systemd/system
+    mode: "0644"
+  notify: "SystemD daemon reload"
+
+- name: "Forge/gitea"
+  ansible.builtin.include_tasks: "gitea.yml"
+  vars:
+    quadlet_container_name: gitea
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/data/' }}"
+    quadlet_cpus: 2
+    quadlet_memory: 1G

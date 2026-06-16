@@ -96,3 +96,10 @@ services:
         ip: 10.0.50.100
         network: macv50
         image: docker.io/smallstep/step-ca:0.30.2
+
+  forge:
+    containers:
+      gitea:
+        ip: 10.0.50.31
+        network: macv50
+        image: docker.gitea.com/gitea:1.26.2

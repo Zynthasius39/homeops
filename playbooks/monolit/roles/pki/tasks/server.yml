@@ -21,6 +21,8 @@
       - digitalSignature
       - keyEncipherment
     key_usage_critical: true
+    extended_key_usage:
+      - serverAuth
 
 - name: "PKI/ica/server: Sign the certificate with the Intermediate CA"
   community.crypto.x509_certificate:

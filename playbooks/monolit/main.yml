@@ -1,5 +1,6 @@
 ---
-- hosts: kvm_hosts
+- name: "Configure Reverse Proxy on KVM hosts"
+  hosts: kvm_hosts
   gather_facts: false
   become: true
   roles:
@@ -7,7 +8,8 @@
   tags:
     - reverse-proxy
 
-- hosts: kvm_hosts
+- name: "Configure Telemetry on KVM hosts"
+  hosts: kvm_hosts
   gather_facts: false
   become: true
   roles:
@@ -15,9 +17,9 @@
   tags:
     - telemetry
 
-- hosts: pki_hosts
+- name: "Configure PKI on PKI hosts"
+  hosts: pki_hosts
   gather_facts: false
-  become: true
   roles:
     - pki
   tags:

@@ -5,8 +5,9 @@
     owner: "{{ _quadlet.owner }}"
     group: "{{ _quadlet.group }}"
     mode: "0755"
-  loop: "{{ _quadlet.mount_src }}"
+  loop: "{{ _quadlet.mount_src[:1] }}"
   register: volume_dirs
+
 - name: "Reverse-proxy/angie: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
@@ -18,6 +19,7 @@
       - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
       - "{{ _quadlet.mount_src[3] }}:/usr/share/angie/cdn:Z"
       - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
+      - "{{ _quadlet.mount_src[5] }}:/hdd"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -41,6 +43,11 @@
       WantedBy:
         - containers.target
   register: quadlet_gen
+  notify: "SystemD daemon reload"
+
+- name: "Run notified handlers now"
+  ansible.builtin.meta: flush_handlers
+
 - name: "Reverse-proxy/angie: Copy etc"
   ansible.builtin.copy:
     src: etc/
@@ -48,6 +55,7 @@
     mode: "0644"
     directory_mode: "0755"
   register: copy_etc
+
 - name: "Reverse-proxy/angie: Copy angie data"
   ansible.builtin.copy:
     src: data/
@@ -55,12 +63,14 @@
     mode: "0644"
     directory_mode: "0755"
   register: copy_data
+
 - name: "Reverse-proxy/angie: Render default server config"
   ansible.builtin.template:
     src: default_server.conf.j2
     dest: "{{ _quadlet.mount_src[1] }}/default_server.conf"
     mode: "0644"
   register: render_default
+
 - name: "Reverse-proxy/angie: Render proxy host configs"
   ansible.builtin.template:
     src: proxy_host.conf.j2

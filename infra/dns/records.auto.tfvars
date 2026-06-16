@@ -38,6 +38,18 @@ records = [
   type   = "A"
   values = ["10.0.50.100"]
 },
+{
+  zone   = "home.alak."
+  name   = "opn"
+  type   = "A"
+  values = ["10.0.10.1"]
+},
+{
+  zone   = "home.alak."
+  name   = "nas"
+  type   = "A"
+  values = ["10.0.10.3"]
+},
 
 # --------------------------------
 # servers.alak

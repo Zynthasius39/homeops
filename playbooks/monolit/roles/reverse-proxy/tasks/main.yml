@@ -9,5 +9,6 @@
       - "{{ _quadlet.data ~ '/html/' }}"
       - "{{ _quadlet.data ~ '/cdn/' }}"
       - "/var/log/angie/"
+      - "/media/vault/CDN"
     quadlet_cpus: 2
     quadlet_memory: 1G

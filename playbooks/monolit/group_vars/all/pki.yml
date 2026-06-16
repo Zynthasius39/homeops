@@ -10,6 +10,21 @@ pki_country_name: AZ
 pki_crl_url: http://ca.home.alak
 pki_dir: /home/syno/pki
 
+pki_infra_hosts:
+  - cn: opn.home.alak
+    san:
+      - "DNS:opn.home.alak"
+      - "IP:10.0.10.1"
+      - "IP:10.0.16.1"
+      - "IP:10.0.50.1"
+      - "IP:10.0.100.1"
+  - cn: nas.home.alak
+    san:
+      - "DNS:nas.home.alak"
+      - "IP:10.0.10.3"
+      - "IP:10.0.50.3"
+  - cn: argocd.naquadah.alak
+
 stepca:
   name: Alakx ACME
   dns:

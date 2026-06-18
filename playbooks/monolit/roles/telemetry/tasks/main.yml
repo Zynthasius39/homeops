@@ -23,7 +23,7 @@
       - "{{ _quadlet.data ~ '/data/' }}"
       - "{{ _quadlet.data ~ '/grafana-datasources.yaml' }}"
     quadlet_cpus: 2
-    quadlet_memory: 512M
+    quadlet_memory: 2G
 
 - name: "Telemetry/alloy"
   ansible.builtin.include_tasks: "alloy.yml"
@@ -51,7 +51,7 @@
     quadlet_mount_src:
       - "{{ _quadlet.data ~ '/prometheus.yaml' }}"
     quadlet_cpus: 2
-    quadlet_memory: 512M
+    quadlet_memory: 1G
 
 - name: "Telemetry/prometheus-node-exporter"
   ansible.builtin.include_tasks: "prometheus-node-exporter.yml"

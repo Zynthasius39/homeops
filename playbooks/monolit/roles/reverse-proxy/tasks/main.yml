@@ -2,13 +2,18 @@
 - name: "Reverse-proxy/angie"
   ansible.builtin.include_tasks: "angie.yml"
   vars:
-    quadlet_container_name: angie
+    quadlet_container_name: "angie-{{ space }}"
     quadlet_mount_src:
       - "{{ _quadlet.data ~ '/etc/angie.conf' }}"
       - "{{ _quadlet.data ~ '/etc/conf/' }}"
       - "{{ _quadlet.data ~ '/html/' }}"
-      - "{{ _quadlet.data ~ '/cdn/' }}"
-      - "/var/log/angie/"
+      - "{{ _quadlet.data_dir ~ '/angie-internal/cdn/' }}"
+      - "/var/log/{{ _quadlet.name }}/"
       - "/media/vault/CDN"
     quadlet_cpus: 2
     quadlet_memory: 1G
+  loop:
+    - internal
+    - public
+  loop_control:
+    loop_var: space

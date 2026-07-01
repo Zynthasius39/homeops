@@ -2,15 +2,31 @@
 # default_server
 # ------------------------------------------------------------
 
-{% set host = services[ansible_role_name].default_server %}
+{% set host = services[ansible_role_name][space].default_server %}
+{% if host.ssl is defined and host.ssl %}
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
-{% if host.local is defined and host.local %}
+
+{% if host.hostname is string %}
+  server_name {{ host.hostname }};
+{% elif host.hostname is iterable %}
+  server_name {{ host.hostname | join(' ') }};
+{% endif %}
+
+  return 301 https://$host$request_uri;
+}
+{% endif %}
+
+server {
+{% if host.ssl is defined and host.ssl %}
   listen 443 ssl default_server;
   listen [::]:443 ssl default_server;
 
   acme stepca;
+{% else %}
+  listen 80 default_server;
+  listen [::]:80 default_server;
 {% endif %}
 
 {% if host.hostname is string %}

@@ -2,8 +2,8 @@
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
-    owner: "{{ _quadlet.owner }}"
-    group: "{{ _quadlet.group }}"
+    owner: 100  # Angie User
+    group: 100  # Angie Group
     mode: "0755"
   loop: "{{ _quadlet.mount_src[:-1] }}"
   register: volume_dirs
@@ -17,9 +17,9 @@
       - "{{ _quadlet.mount_src[0] }}:/etc/angie/angie.conf:Z"
       - "{{ _quadlet.mount_src[1] }}:/etc/angie/conf:Z"
       - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
-      - "{{ _quadlet.mount_src[3] }}:/usr/share/angie/cdn:Z"
+      - "{{ _quadlet.mount_src[3] }}:/usr/share/angie/cdn:z"
       - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
-      - "{{ _quadlet.mount_src[5] }}:/hdd"
+      - "{{ _quadlet.mount_src[5] }}:/hdd:ro"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -47,7 +47,7 @@
 
 - name: "Reverse-proxy/angie: Copy etc"
   ansible.builtin.copy:
-    src: etc/
+    src: "{{ space }}/etc/"
     dest: "{{ _quadlet.mount_src[0] | dirname }}"
     mode: "0644"
     directory_mode: "0755"
@@ -55,7 +55,7 @@
 
 - name: "Reverse-proxy/angie: Copy angie data"
   ansible.builtin.copy:
-    src: data/
+    src: "{{ space }}/data/"
     dest: "{{ _quadlet.data }}"
     mode: "0644"
     directory_mode: "0755"
@@ -63,14 +63,14 @@
 
 - name: "Reverse-proxy/angie: Render default server config"
   ansible.builtin.template:
-    src: default_server.conf.j2
+    src: "{{ space }}/default_server.conf.j2"
     dest: "{{ _quadlet.mount_src[1] }}http.d/default_server.conf"
     mode: "0644"
   register: render_default
 
 - name: "Reverse-proxy/angie: Render proxy host configs"
   ansible.builtin.template:
-    src: proxy_host.conf.j2
+    src: "{{ space }}/proxy_host.conf.j2"
     dest: "\
       {{ _quadlet.mount_src[1] }}http.d/\
       {% if proxy_host.hostname is string %}\
@@ -80,14 +80,14 @@
       {% endif %}\
       .conf"
     mode: "0644"
-  loop: "{{ services[ansible_role_name].proxy_hosts }}"
+  loop: "{{ services[ansible_role_name][space].proxy_hosts }}"
   loop_control:
     loop_var: proxy_host
   register: render_proxy
 
 - name: "Reverse-proxy/angie: Render angie config"
   ansible.builtin.template:
-    src: angie.conf.j2
+    src: "{{ space }}/angie.conf.j2"
     dest: "{{ _quadlet.mount_src[0] | dirname }}/angie.conf"
     mode: "0644"
   register: render_angie

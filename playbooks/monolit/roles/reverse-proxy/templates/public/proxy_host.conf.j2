@@ -15,13 +15,14 @@ server {
   set $server         "{{ proxy_host.host }}";
   set $port           {{ proxy_host.port }};
 
-  listen 80;
-  listen [::]:80;
-{% if proxy_host.local is defined and proxy_host.local %}
+{% if proxy_host.ssl is defined and proxy_host.ssl %}
   listen 443 ssl;
   listen [::]:443 ssl;
 
-  acme stepca;
+  acme letsenc;
+{% else %}
+  listen 80;
+  listen [::]:80;
 {% endif %}
 
 {% if proxy_host.hostname is string %}

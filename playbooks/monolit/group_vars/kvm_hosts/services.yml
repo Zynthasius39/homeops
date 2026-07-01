@@ -5,41 +5,51 @@ services:
       acme_uri: https://ca.home.alak/acme/acme/directory
       challenge: http
     containers:
-      angie:
+      angie-internal:
         ip: 10.0.50.23
         network: macv50
         image: docker.angie.software/angie:1.11.4-minimal
-    default_server:
-      hostname: home.alak
-      local: true
-    proxy_hosts:
-      - hostname: git.alakx.com
-        host: 10.0.50.31
-        port: 3000
-        include: ["cloudflare"]
-      - hostname: wiki.alakx.com
-        host: 10.0.50.28
-        port: 3000
-        include: ["cloudflare"]
-      - hostname: status.alakx.com
-        host: 10.0.50.95
-        port: 3001
-      - hostname: status.home.alak
-        local: true
-        host: 10.0.50.95
-        port: 3001
-        include: ["cloudflare"]
-      - hostname: beu.alakx.com
-        host: 10.0.70.24
-        port: 80
-        include: ["cloudflare"]
-      - hostname:
-          - bridgespero.com
-          - prev.bridgespero.com
-          - dev.bridgespero.com
-          - meet.bridgespero.com
-        host: 10.0.50.36
-        port: 80
+      angie-public:
+        ip: 10.0.70.23
+        network: macv70
+        image: docker.angie.software/angie:1.11.4-minimal
+    internal:
+      default_server:
+        hostname: home.alak
+        ssl: true
+      proxy_hosts:
+        - hostname: git.alakx.com
+          host: 10.0.50.31
+          port: 3000
+          include: ["cloudflare"]
+        - hostname: wiki.alakx.com
+          host: 10.0.50.28
+          port: 3000
+          include: ["cloudflare"]
+        - hostname: status.alakx.com
+          host: 10.0.50.95
+          port: 3001
+        - hostname: status.home.alak
+          ssl: true
+          host: 10.0.50.95
+          port: 3001
+          include: ["cloudflare"]
+        - hostname: beu.alakx.com
+          host: 10.0.70.24
+          port: 80
+          include: ["cloudflare"]
+        - hostname:
+            - bridgespero.com
+            - prev.bridgespero.com
+            - dev.bridgespero.com
+            - meet.bridgespero.com
+          host: 10.0.50.36
+          port: 80
+    public:
+      default_server:
+        hostname: root.alakx.com
+        ssl: true
+      proxy_hosts: []
   telemetry:
     containers:
       grafana:

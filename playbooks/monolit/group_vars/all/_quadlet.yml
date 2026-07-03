@@ -4,22 +4,29 @@ _quadlet:  # quadlet internals
   group: "{{ quadlet.group | default('root') }}"
   data_dir: "{{ quadlet.data_dir | default('/var/lib/containers/data') | realpath }}"
   env_dir: "{{ quadlet.env_dir | default('/var/lib/containers/env') | realpath }}"
-  quadlet_dir: "{{ quadlet.quadlet_dir | default ('/etc/containers/systemd') | realpath }}"
-  container: "{{ quadlet_container | default(services[ansible_role_name].containers[quadlet_container_name]) }}"
-  name: "{{ quadlet_container_name }}"
-  data: "{{ _quadlet.data_dir ~ '/' ~ quadlet_container_name }}"
-  env: "{{ _quadlet.env_dir ~ '/' ~ quadlet_container_name }}.env"
+  quadlet_dir: "{{ quadlet.quadlet_dir | default('/etc/containers/systemd') | realpath }}"
+  container: "{{ quadlet_container | default(services[ansible_role_name].containers[_quadlet.name]) }}"
+  name: "{{ quadlet_container_name | default(_quadlet.container.name) }}"
+  data: "{{ _quadlet.data_dir ~ '/' ~ _quadlet.name }}"
+  env: "{{ quadlet_env | default(_quadlet.env_dir ~ '/' ~ _quadlet.name) }}.env"
   image: "{{ _quadlet.container.image }}"
   ip: "{{ _quadlet.container.ip | default(omit) }}"
   mac_address: "{{ (_quadlet.ip | macgen()) | default(omit) }}"
   mount_src: "{{ quadlet_mount_src | default(_quadlet.container.mount_src) }}"
   cpus: "{{ quadlet_cpus | default(_quadlet.container.cpus) }}"
   memory: "{{ quadlet_memory | default(_quadlet.container.memory) }}"
-  network: "{{ _quadlet.container.network | default(quadlet.default_network) }}"
+  network: "{{ quadlet_network | default(_quadlet.container.network) | default(quadlet.default_network) }}"
   dns: "{{ quadlet.dns_by_network[_quadlet.container.network | default(quadlet.default_network) | default('default')] | default(omit) }}"
   __systemd_install: "{{ lookup('template', 'systemd_install.j2') }}"
   __systemd_service: "{{ lookup('template', 'systemd_service.j2') }}"
   __systemd_unit: "{{ lookup('template', 'systemd_unit.j2') }}"
+  options:
+    - "AutoUpdate=registry"
+    - |
+
+      {{ _quadlet.__systemd_service }}
+      {{ _quadlet.__systemd_unit }}
+      {{ _quadlet.__systemd_install.rstrip() }}
   systemd_service:
     Restart: always
     TimeoutStartSec: 300

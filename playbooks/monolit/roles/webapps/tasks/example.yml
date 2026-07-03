@@ -1,0 +1,75 @@
+---
+- name: "Webapps/example: Generate quadlet (boilerplate example)"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    command: "/usr/local/bin/example-cmd"
+    entrypoint: "/bin/bash"
+    env:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Asia/Baku"
+    env_file: "{{ _quadlet.env }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/data:Z"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    dns: "{{ _quadlet.dns }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    shm_size: 512M
+    user: root
+    workdir: /data
+    healthcheck: "curl -f http://localhost:80/ || exit 1"
+    healthcheck_interval: 30s
+    healthcheck_retries: 5
+    healthcheck_start_period: 20s
+    healthcheck_timeout: 5s
+    no_healthcheck: false
+    security_opt:
+      - label=disable
+    rm: true
+    detach: false
+    interactive: true
+    tty: true
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    # Service/Container Naming and Paths
+    quadlet_container_name: "example-service"
+    container_name: "example-service"
+    container_env: "/path/to/env/file"
+    ip: "10.0.50.100"
+    network: "macv50"
+
+    # Core Systemd variables (used by internal/pki/telemetry/forge roles)
+    systemd_service:
+      Restart: always
+      TimeoutStartSec: 300
+      ExecStartPre: "/bin/sh -c 'until podman healthcheck run dependent-pgsql; do sleep 2; done'"
+    systemd_unit:
+      After:
+        - containers.target
+        - dependent-pgsql.service
+      Requires:
+        - dependent-pgsql.service
+    systemd_install:
+      WantedBy:
+        - containers.target
+
+    # Unit-specific overrides (used by quadlet role tasks)
+    unit_wantedby:
+      - containers.target
+    unit_requires:
+      - wait-for-internet.service
+    unit_after:
+      - containers.target
+      - wait-for-internet.service

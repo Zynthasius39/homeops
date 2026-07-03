@@ -1,0 +1,27 @@
+---
+- name: "Webapps/hpage: Create container directories"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+    mode: "0755"
+  loop:
+    - "{{ quadlet.env_dir }}"
+    - "{{ quadlet.data_dir }}"
+
+- name: "Webapps/hpage: Include tasks"
+  ansible.builtin.include_tasks: "hpage.yml"
+  vars:
+    quadlet_mount_src:
+      - "{{ _quadlet.data_dir ~ '/hpage-api/shared/' }}"
+      - /var/log/beusproxy/
+
+- name: "Webapps: Generate environment files"
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ _quadlet.env_dir ~ '/' ~ item.key ~ '.env' }}"
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+    mode: "0600"
+  loop: "{{ services[ansible_role_name].env | dict2items }}"

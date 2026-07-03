@@ -1,0 +1,20 @@
+[Unit]
+Description=HPage Nginx container
+Requires=hpage-network.service hpage_api.c.service hpage_api_offline.c.service
+After=containers.target hpage-network.service hpage_api.c.service hpage_api_offline.c.service
+PartOf=containers.target
+
+[Service]
+AllowedCPUs=2
+MemoryMax=2G
+
+[Container]
+ContainerName=hpage_web
+Network=hpage
+Network=macv70:ip=10.0.70.24,mac=00:0C:30:0A:32:24
+Image=localhost/zynthasius/beusp:alpine
+PodmanArgs=--cpus 2
+PodmanArgs=--memory 2G
+
+[Install]
+WantedBy=containers.target

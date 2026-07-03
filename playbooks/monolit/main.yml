@@ -19,3 +19,6 @@
     - role: reverse-proxy
       tags:
         - reverse-proxy
+    - role: webapps
+      tags:
+        - webapps

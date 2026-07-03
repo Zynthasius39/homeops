@@ -1,0 +1,133 @@
+---
+- name: "Webapps/hpage: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+    mode: "0755"
+  loop: "{{ _quadlet.mount_src }}"
+  register: volume_dirs
+
+- name: "Webapps/hpage-network: Generate quadlets"
+  containers.podman.podman_network:
+    name: hpage
+    state: quadlet
+    quadlet_options:
+      - Options=metric=200
+  notify: "SystemD daemon reload"
+
+- name: "Webapps/hpage-api: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    env_file: "{{ _quadlet.env }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/hpage/shared:z"
+    network: "{{ _quadlet.network }}"
+    cpus: 4
+    memory: 2G
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    quadlet_container_name: hpage-api
+
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - wait-for-internet.service
+        - hpage-network.service
+      Requires:
+        - wait-for-internet.service
+        - hpage-network.service
+  notify: "SystemD daemon reload"
+
+- name: "Webapps/hpage-api-offline: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    env:
+      TMSAPI_OFFLINE: true
+      BOT_ENABLED: false
+    env_file: "{{ _quadlet.env }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/hpage/shared:z"
+    network: "{{ _quadlet.network }}"
+    cpus: 2
+    memory: 1G
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    quadlet_container_name: hpage-api-offline
+    quadlet_env: "{{ _quadlet.env_dir ~ '/hpage-api' }}"
+
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - wait-for-internet.service
+        - hpage-network.service
+      Requires:
+        - wait-for-internet.service
+        - hpage-network.service
+  notify: "SystemD daemon reload"
+
+- name: "Webapps/hpage-web: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    network: "{{ _quadlet.network }}"
+    cpus: 2
+    memory: 1G
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    quadlet_container_name: hpage-web
+    quadlet_network:
+      - hpage
+      - "macv70:ip={{ _quadlet.ip }},mac={{ _quadlet.mac_address }}"
+
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - hpage-api.service
+        - hpage-api-offline.service
+      Requires:
+        - hpage-api.service
+        - hpage-api-offline.service
+    systemd_install:
+      WantedBy:
+        - containers.target
+  notify: "SystemD daemon reload"
+
+- name: "Webapps/hpage-bot: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    env_file: "{{ _quadlet.env }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/hpage/shared:z"
+      - "{{ _quadlet.mount_src[1] }}:/hpage/log:z"
+    network: "{{ _quadlet.network }}"
+    cpus: 2
+    memory: 1G
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    quadlet_container_name: hpage-bot
+    quadlet_env: "{{ _quadlet.env_dir ~ '/hpage-api' }}"
+
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - hpage-web.service
+      Requires:
+        - hpage-web.service
+  notify: "SystemD daemon reload"

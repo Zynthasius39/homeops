@@ -40,7 +40,13 @@ server {
 
   root /usr/share/angie/html/default_www;
 
+  location =/p8s {
+    prometheus all;
+  }
+
   location / {
     try_files $uri /index.html;
   }
+
+  status_zone $host zone=host_zone:10;
 }

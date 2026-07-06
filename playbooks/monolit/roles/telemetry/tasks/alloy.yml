@@ -15,7 +15,7 @@
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
     volume:
       - "{{ _quadlet.mount_src[0] }}:/etc/alloy/config.alloy:Z,ro"
-      - "/:/host:ro,rslave"
+      - /var/log:/host/log:ro
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"

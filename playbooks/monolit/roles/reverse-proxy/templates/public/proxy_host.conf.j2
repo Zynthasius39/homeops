@@ -44,4 +44,6 @@ server {
   location / {
     include conf/http.d/include/proxy.conf;
   }
+
+  status_zone $host zone=host_zone:10;
 }

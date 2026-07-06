@@ -100,6 +100,9 @@ services:
           targets: ["10.0.50.2:9882"]
         - name: apcups
           targets: ["10.0.50.101:9162"]
+        - name: angie-public
+          targets: ["root.alakx.com"]
+          metrics_path: /p8s
   pki:
     containers:
       step-ca:

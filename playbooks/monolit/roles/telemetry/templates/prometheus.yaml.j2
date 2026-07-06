@@ -4,7 +4,10 @@ global:
 
 scrape_configs:
 {% for job in config.jobs %}
-  - job_name: "{{ job.name }}"
+  - job_name: {{ job.name }}
+{% if job.metrics_path is defined %}
+    metrics_path: {{ job.metrics_path }}
+{% endif %}
     static_configs:
       - targets: {{ job.targets | tojson }}
 {% endfor %}

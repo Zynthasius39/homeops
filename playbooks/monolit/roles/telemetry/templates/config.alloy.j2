@@ -39,7 +39,7 @@ discovery.relabel "journal" {
 
 loki.source.journal "journal" {
 	max_age       = "12h0m0s"
-	path          = "/var/log/journal"
+	path          = "/host/log/journal"
 	relabel_rules = discovery.relabel.journal.rules
 	forward_to    = [loki.write.default.receiver]
 	labels        = {
@@ -49,8 +49,8 @@ loki.source.journal "journal" {
 
 loki.source.file "system" {
 	targets = [{
-		__address__ = "localhost",
-		__path__    = "/var/log/*log",
+		__address__ = "{{ inventory_hostname }}",
+		__path__    = "/host/log/*log",
 		job         = "varlogs",
 	}]
 	forward_to = [loki.write.default.receiver]
@@ -64,8 +64,8 @@ loki.source.file "system" {
 {% if inventory_hostname in groups['kvm_hosts'] %}
 loki.source.file "reverse_proxy" {
 	targets = [{
-		__address__ = "localhost",
-		__path__    = "/var/log/angie/*log",
+		__address__ = "{{ inventory_hostname }}",
+		__path__    = "/host/log/angie-*/*log",
 		job         = "varlogs",
 	}]
 	forward_to = [loki.write.default.receiver]

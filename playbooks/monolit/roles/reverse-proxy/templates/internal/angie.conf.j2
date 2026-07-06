@@ -34,7 +34,7 @@ http {
 
   resolver {{ _quadlet.dns }};
 
-  acme_client stepca {{ services[ansible_role_name].config.acme_uri }} challenge={{ services[ansible_role_name].config.challenge }};
+  acme_client stepca {{ services[ansible_role_name].config.acme_uri }} challenge={{ services[ansible_role_name].config.challenge }} account_key=/etc/angie/conf/account_key;
 
   ssl_certificate     $acme_cert_stepca;
   ssl_certificate_key $acme_cert_key_stepca;

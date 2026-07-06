@@ -7,9 +7,11 @@
       - "{{ _quadlet.data ~ '/etc/angie.conf' }}"
       - "{{ _quadlet.data ~ '/etc/conf/' }}"
       - "{{ _quadlet.data ~ '/html/' }}"
-      - "{{ _quadlet.data_dir ~ '/angie-internal/cdn/' }}"
+      - "{{ _quadlet.data ~ '/acme/' }}"
       - "/var/log/{{ _quadlet.name }}/"
+      - "{{ _quadlet.data_dir ~ '/angie-internal/cdn/' }}"
       - "/media/vault/CDN"
+      - "/home/syno/Games/cscods/fastdl"
     quadlet_cpus: 2
     quadlet_memory: 1G
   loop:

@@ -5,21 +5,14 @@
     owner: 100  # Angie User
     group: 100  # Angie Group
     mode: "0755"
-  loop: "{{ _quadlet.mount_src[:-1] }}"
-  register: volume_dirs
+  loop: "{{ _quadlet.mount_src[:-2] }}"
 
 - name: "Reverse-proxy/angie: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
-    volume:
-      - "{{ _quadlet.mount_src[0] }}:/etc/angie/angie.conf:Z"
-      - "{{ _quadlet.mount_src[1] }}:/etc/angie/conf:Z"
-      - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
-      - "{{ _quadlet.mount_src[3] }}:/usr/share/angie/cdn:z"
-      - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
-      - "{{ _quadlet.mount_src[5] }}:/hdd:ro"
+    volume: "{{ angie_base_volumes + (angie_public_volumes if space == 'public' else []) }}"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -34,6 +27,16 @@
         {{ _quadlet.__systemd_unit }}
         {{ _quadlet.__systemd_install.rstrip() }}
   vars:
+    angie_base_volumes:
+      - "{{ _quadlet.mount_src[0] }}:/etc/angie/angie.conf:Z"
+      - "{{ _quadlet.mount_src[1] }}:/etc/angie/conf:Z"
+      - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
+      - "{{ _quadlet.mount_src[3] }}:/var/lib/angie/acme:Z"
+      - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
+    angie_public_volumes:
+      - "{{ _quadlet.mount_src[5] }}:/usr/share/angie/cdn:z"
+      - "{{ _quadlet.mount_src[6] }}:/usr/share/angie/hdd:ro"
+      - "{{ _quadlet.mount_src[7] }}:/usr/share/angie/fastdl:ro"
     systemd_service:
       Restart: always
     systemd_unit:

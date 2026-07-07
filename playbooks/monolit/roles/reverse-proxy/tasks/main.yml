@@ -9,6 +9,7 @@
       - "{{ _quadlet.data ~ '/html/' }}"
       - "{{ _quadlet.data ~ '/acme/' }}"
       - "/var/log/{{ _quadlet.name }}/"
+      - "{{ _quadlet.data_dir ~ '/modmaster-fpm/html/' }}"
       - "{{ _quadlet.data_dir ~ '/angie-internal/cdn/' }}"
       - "/media/vault/CDN"
       - "/home/syno/Games/cscods/fastdl"

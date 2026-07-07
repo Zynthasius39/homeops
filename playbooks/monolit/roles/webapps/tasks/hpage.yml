@@ -7,7 +7,6 @@
     group: "{{ _quadlet.group }}"
     mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
-  register: volume_dirs
 
 - name: "Webapps/hpage-network: Generate quadlets"
   containers.podman.podman_network:
@@ -81,15 +80,14 @@
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
     image: "{{ _quadlet.image }}"
-    network: "{{ _quadlet.network }}"
+    network:
+      - "{{ _quadlet.networks[0] }}:ip={{ _quadlet.ip }},mac={{ _quadlet.mac_address }}"
+      - "{{ _quadlet.networks[1] }}"
     cpus: 2
     memory: 1G
     quadlet_options: "{{ _quadlet.options }}"
   vars:
     quadlet_container_name: hpage-web
-    quadlet_network:
-      - hpage
-      - "macv70:ip={{ _quadlet.ip }},mac={{ _quadlet.mac_address }}"
 
     systemd_service:
       Restart: always

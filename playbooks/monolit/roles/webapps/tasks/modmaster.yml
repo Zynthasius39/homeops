@@ -1,0 +1,92 @@
+---
+- name: "Webapps/modmaster-fpm: Create volume directory for HTML"
+  ansible.builtin.file:
+    path: "{{ _quadlet.mount_src[0] | dirname }}"
+    state: directory
+    owner: 100  # Angie User
+    group: 101  # Angie Group
+    mode: "0755"
+  vars:
+    quadlet_container_name: modmaster-fpm
+
+- name: "Webapps/modmaster-db: Create volume directory for database"
+  ansible.builtin.file:
+    path: "{{ _quadlet.mount_src[1] | dirname }}"
+    state: directory
+    owner: 999  # MariaDB User
+    group: 999  # MariaDB Group
+    mode: "0755"
+  vars:
+    quadlet_container_name: modmaster-db
+
+- name: "Webapps/modmaster-db: Copy config"
+  ansible.builtin.copy:
+    src: modmaster/z-innodb-mariadb.ini
+    dest: "{{ _quadlet.mount_src[2] | dirname }}"
+    mode: "0644"
+    directory_mode: "0755"
+  vars:
+    quadlet_container_name: modmaster-db
+
+- name: "Webapps/modmaster-network: Generate a quadlet"
+  containers.podman.podman_network:
+    name: modmaster
+    state: quadlet
+    quadlet_options:
+      - Options=metric=200
+  notify: "SystemD daemon reload"
+
+- name: "Webapps/modmaster-db: Generate a quadlet"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    env_file: "{{ _quadlet.env }}"
+    volume:
+      - "{{ _quadlet.mount_src[1] }}:/var/lib/mysql:Z"
+      - "{{ _quadlet.mount_src[2] }}:/etc/mysql/conf.d/z-innodb-mariadb.ini:ro"
+    network: "{{ _quadlet.network }}"
+    cpus: 2
+    memory: 1G
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    quadlet_container_name: modmaster-db
+
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - wait-for-internet.service
+        - modmaster-network.service
+      Requires:
+        - wait-for-internet.service
+        - modmaster-network.service
+  notify: "SystemD daemon reload"
+
+- name: "Webapps/modmaster-fpm: Generate a quadlet"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    env_file: "{{ _quadlet.env }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/usr/share/angie/modmaster:z"
+    workdir: /usr/share/angie/modmaster
+    user: "100:101"
+    network: "{{ _quadlet.network }}"
+    cpus: 2
+    memory: 2G
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    quadlet_container_name: modmaster-fpm
+
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - modmaster-db.service
+      Requires:
+        - modmaster-db.service
+  notify: "SystemD daemon reload"

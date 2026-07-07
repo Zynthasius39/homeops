@@ -1,5 +1,5 @@
 user angie;
-worker_processes auto;
+worker_processes 4;
 worker_rlimit_nofile 65536;
 
 pcre_jit on;
@@ -32,7 +32,7 @@ http {
   proxy_set_header              X-Forwarded-For $proxy_add_x_forwarded_for;
   proxy_set_header              Accept-Encoding "";
 
-  resolver {{ _quadlet.dns }} ipv6=off;
+  resolver host.containers.internal ipv6=off;
 
   acme_client letsenc https://acme-v02.api.letsencrypt.org/directory account_key=/etc/angie/conf/account_key;
 

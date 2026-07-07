@@ -7,11 +7,14 @@ services:
     containers:
       angie-internal:
         ip: 10.0.50.23
-        network: macv50
+        networks:
+          - macv50
+          - modmaster
         image: docker.angie.software/angie:1.11.4-minimal
       angie-public:
         ip: 10.0.70.23
-        network: macv70
+        networks:
+          - macv70
         image: docker.angie.software/angie:1.11.4-minimal
     internal:
       default_server:
@@ -130,11 +133,22 @@ services:
       hpage-web:
         description: Hpage Nginx container
         ip: 10.0.70.24
+        networks:
+          - macv70
+          - hpage
         image: localhost/zynthasius/beusp:alpine
       hpage-bot:
         description: Hpage BeuTMSBot container
         network: hpage
         image: localhost/zynthasius/beusproxy:bot-alpine
+      modmaster-db:
+        description: Modmaster Wordpress MariaDB container
+        network: modmaster
+        image: docker.io/library/mariadb:12.3
+      modmaster-fpm:
+        description: Modmaster Wordpress PHP-FPM container
+        network: modmaster
+        image: docker.io/library/wordpress:7-php8.4-fpm-alpine
     env:
       hpage-api:
         APP_NAME: beusproxy
@@ -185,3 +199,27 @@ services:
         BOT_SMTP_HOSTNAME: smtp.gmail.com
         TMSAPI_OFFLINE: false
         SWAGGER_ENABLED: true
+      modmaster-fpm:
+        WORDPRESS_DB_USER: negadmin
+        WORDPRESS_DB_HOST: modmaster-db
+        WORDPRESS_DB_NAME: negansdb
+        WORDPRESS_DB_PASSWORD: !vault &modmaster_db_pass |
+          $ANSIBLE_VAULT;1.1;AES256
+          37653537643538326661313032626166393337336232313533626232316332363739343933653835
+          3533613733623132643436663638616566343735313138610a363962663166653534613264326462
+          33353130333763353965373964626630616363373766643834343632303837363337666532313539
+          3730643365623638330a613265323736323031343265336532313361623039656362383533343861
+          63386661616633356333653633353734396438333734323736313465663436623935656263343030
+          3361333435313635653431613562336233396563623335316131
+      modmaster-db:
+        MARIADB_USER: negadmin
+        MARIADB_DATABASE: negansdb
+        MARIADB_PASSWORD: *modmaster_db_pass
+        MARIADB_ROOT_PASSWORD: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          32356164326364396132373564643862633066656338653839333166363939666131373436656264
+          6337393439633661346633306663616539633332633561660a333233353533306434383739663533
+          36356135306661353230303639313066313533323835656138353334343333633035306230316138
+          3965613430373230350a633865323233363266353065323131323938303365353332363562393861
+          37343061323535326538343163666331666361623662353263663039373665653333346531333166
+          6239653039316163366435363262353461326638653136643162

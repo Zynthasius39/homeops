@@ -1,116 +1,116 @@
 records = [
 
-# --------------------------------
-# home.alak
-# --------------------------------
-{
-  zone   = "home.alak."
-  type   = "A"
-  values = ["10.0.50.23"]
-},
-{
-  zone   = "home.alak."
-  name   = "_acme-challenge"
-  type   = "CNAME"
-  values = ["home.alak."]
-},
-{
-  zone   = "home.alak."
-  name   = "whoami.dost"
-  type   = "CNAME"
-  values = ["home.alak."]
-},
-{
-  zone   = "home.alak."
-  name   = "status"
-  type   = "CNAME"
-  values = ["home.alak."]
-},
-{
-  zone   = "home.alak."
-  name   = "ups"
-  type   = "A"
-  values = ["10.0.50.99"]
-},
-{
-  zone   = "home.alak."
-  name   = "ca"
-  type   = "A"
-  values = ["10.0.50.100"]
-},
-{
-  zone   = "home.alak."
-  name   = "opn"
-  type   = "A"
-  values = ["10.0.10.1"]
-},
-{
-  zone   = "home.alak."
-  name   = "nas"
-  type   = "A"
-  values = ["10.0.10.3"]
-},
+  # --------------------------------
+  # home.alak
+  # --------------------------------
+  {
+    zone   = "home.alak."
+    type   = "A"
+    values = ["10.0.50.23"]
+  },
+  {
+    zone   = "home.alak."
+    name   = "_acme-challenge"
+    type   = "CNAME"
+    values = ["home.alak."]
+  },
+  {
+    zone   = "home.alak."
+    name   = "whoami.dost"
+    type   = "CNAME"
+    values = ["home.alak."]
+  },
+  {
+    zone   = "home.alak."
+    name   = "status"
+    type   = "CNAME"
+    values = ["home.alak."]
+  },
+  {
+    zone   = "home.alak."
+    name   = "ups"
+    type   = "A"
+    values = ["10.0.50.99"]
+  },
+  {
+    zone   = "home.alak."
+    name   = "ca"
+    type   = "A"
+    values = ["10.0.50.100"]
+  },
+  {
+    zone   = "home.alak."
+    name   = "opn"
+    type   = "A"
+    values = ["10.0.10.1"]
+  },
+  {
+    zone   = "home.alak."
+    name   = "nas"
+    type   = "A"
+    values = ["10.0.10.3"]
+  },
 
-# --------------------------------
-# servers.alak
-# --------------------------------
-{
-  zone   = "servers.alak."
-  name   = "nextcloud"
-  type   = "A"
-  values = ["10.0.50.24"]
-},
-{
-  zone   = "servers.alak."
-  name   = "jellyfin"
-  type   = "A"
-  values = ["10.0.50.41"]
-},
-{
-  zone   = "servers.alak."
-  name   = "jellyseerr"
-  type   = "A"
-  values = ["10.0.50.42"]
-},
-{
-  zone   = "servers.alak."
-  name   = "deluge"
-  type   = "A"
-  values = ["10.0.50.48"]
-},
+  # --------------------------------
+  # servers.alak
+  # --------------------------------
+  {
+    zone   = "servers.alak."
+    name   = "nextcloud"
+    type   = "A"
+    values = ["10.0.50.24"]
+  },
+  {
+    zone   = "servers.alak."
+    name   = "jellyfin"
+    type   = "A"
+    values = ["10.0.50.41"]
+  },
+  {
+    zone   = "servers.alak."
+    name   = "jellyseerr"
+    type   = "A"
+    values = ["10.0.50.42"]
+  },
+  {
+    zone   = "servers.alak."
+    name   = "deluge"
+    type   = "A"
+    values = ["10.0.50.48"]
+  },
 
-# --------------------------------
-# naquadah.alak
-# --------------------------------
+  # --------------------------------
+  # naquadah.alak
+  # --------------------------------
 
-{
-  zone   = "naquadah.alak."
-  type   = "A"
-  values = ["10.0.20.0"]
-},
-{
-  zone   = "naquadah.alak."
-  name   = "gopher"
-  type   = "CNAME"
-  values = ["naquadah.alak."]
-},
-{
-  zone   = "naquadah.alak."
-  name   = "dev.gopher"
-  type   = "CNAME"
-  values = ["naquadah.alak."]
-},
-{
-  zone   = "naquadah.alak."
-  name   = "argocd"
-  type   = "CNAME"
-  values = ["naquadah.alak."]
-},
-{
-  zone   = "naquadah.alak."
-  name   = "grafana"
-  type   = "CNAME"
-  values = ["naquadah.alak."]
-},
+  {
+    zone   = "naquadah.alak."
+    type   = "A"
+    values = ["10.0.20.0"]
+  },
+  {
+    zone   = "naquadah.alak."
+    name   = "gopher"
+    type   = "CNAME"
+    values = ["naquadah.alak."]
+  },
+  {
+    zone   = "naquadah.alak."
+    name   = "dev.gopher"
+    type   = "CNAME"
+    values = ["naquadah.alak."]
+  },
+  {
+    zone   = "naquadah.alak."
+    name   = "argocd"
+    type   = "CNAME"
+    values = ["naquadah.alak."]
+  },
+  {
+    zone   = "naquadah.alak."
+    name   = "grafana"
+    type   = "CNAME"
+    values = ["naquadah.alak."]
+  },
 
 ]

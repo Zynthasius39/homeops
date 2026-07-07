@@ -13,7 +13,7 @@ Description={{
 }}
 {% endif %}
 {% for key, value in (systemd_unit | default({})).items() %}
-{% if key in ['Requires', 'After'] %}
+{% if key in ['Requires', 'After', 'Wants'] %}
 {{ key }}={{ value | join (' ') }}
 {% else %}
 {{ key }}={{ value }}

@@ -1,0 +1,24 @@
+(block alloy
+    (blockinherit container)
+
+    (allow process container_t (process (share)))
+
+    (allow process process ( capability ( chown dac_override fowner fsetid kill net_bind_service setfcap setgid setpcap setuid sys_chroot ))) 
+    (allow process process (tcp_socket (listen)))
+    (allow process unreserved_port_t (tcp_socket (name_bind name_connect)))
+    (allow process node_t (tcp_socket (node_bind)))
+    (allow process websm_port_t (tcp_socket (name_connect)))
+    (allow process http_port_t (tcp_socket (name_connect)))
+
+    (blockinherit log_container)
+    (allow process container_file_t ( dir ( getattr ioctl lock open read search ))) 
+    (allow process container_file_t ( file ( getattr ioctl lock open read ))) 
+    (allow process container_file_t ( fifo_file ( getattr open read lock ioctl ))) 
+    (allow process container_file_t ( sock_file ( getattr open read ))) 
+    (allow process user_home_t ( dir ( getattr ioctl lock open read search ))) 
+    (allow process user_home_t ( file ( getattr ioctl lock open read ))) 
+    (allow process user_home_t ( fifo_file ( getattr open read lock ioctl ))) 
+    (allow process user_home_t ( sock_file ( getattr open read ))) 
+    (allow process var_log_t (dir (open read write getattr search add_name remove_name watch)))
+    (allow process var_log_t (file (open read write getattr setattr create ioctl append unlink)))
+)

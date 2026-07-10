@@ -1,0 +1,5 @@
+---
+- name: "SystemD daemon reload"
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  notify: "SystemD enable forge target"

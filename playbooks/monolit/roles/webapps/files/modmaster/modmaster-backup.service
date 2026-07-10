@@ -1,0 +1,9 @@
+[Unit]
+Description=Backup Modmaster
+Requires=media-vault.mount
+After=media-vault.mount
+BindsTo=media-vault.mount
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/bin/modmaster-backup.sh

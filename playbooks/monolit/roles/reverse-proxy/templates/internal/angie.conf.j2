@@ -56,7 +56,7 @@ http {
                       'ucs="$upstream_cache_status" ua="$upstream_addr" us="$upstream_status" '
                       'uct="$upstream_connect_time" urt="$upstream_response_time"';
 
-  access_log /var/log/angie/access.log main;
+  access_log /var/log/angie/access.log standard;
 
   map $http_x_forwarded_proto $x_forwarded_proto {
     "http" "http";

@@ -1,0 +1,18 @@
+---
+- name: "Games: Create container directories"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+    mode: "0755"
+  loop:
+    - "{{ quadlet.data_dir }}"
+
+- name: "Games/minecraft-atm10s: Include tasks"
+  ansible.builtin.include_tasks: "minecraft-atm10s.yml"
+  vars:
+    quadlet_container_name: minecraft-atm10s
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/server/' }}"
+      - "{{ services[ansible_role_name].config.backup_path ~ _quadlet.name ~ '/' }}"

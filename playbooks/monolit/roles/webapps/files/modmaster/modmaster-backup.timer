@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Backup Modmaster weekly and on boot
+Wants=wordpress.c.service wordpress-mysql.c.service
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

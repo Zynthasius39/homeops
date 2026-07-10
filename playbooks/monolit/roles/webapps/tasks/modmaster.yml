@@ -19,6 +19,14 @@
   vars:
     quadlet_container_name: modmaster-db
 
+- name: "Webapps/modmaster-db: Create backup directory"
+  ansible.builtin.file:
+    path: "{{ _quadlet.env_vars.BACKUP_DIR | dirname }}"
+    state: directory
+    mode: "0755"
+  vars:
+    quadlet_container_name: modmaster-db
+
 - name: "Webapps/modmaster-db: Copy config"
   ansible.builtin.copy:
     src: modmaster/z-innodb-mariadb.ini
@@ -90,3 +98,31 @@
       Requires:
         - modmaster-db.service
   notify: "SystemD daemon reload"
+
+- name: "Webapps/modmaster: Render backup script"
+  ansible.builtin.template:
+    src: modmaster/modmaster_backup.sh.j2
+    dest: /usr/local/bin/modmaster_backup.sh
+    mode: '0755'
+  vars:
+    quadlet_container_name: modmaster-db
+
+- name: "Webapps/modmaster: Copy systemd timer and service"
+  ansible.builtin.copy:
+    src: "modmaster/{{ item }}"
+    dest: /etc/systemd/system
+    directory_mode: "0755"
+    mode: "0644"
+  loop:
+    - modmaster-backup.service
+    - modmaster-backup.timer
+  notify: "SystemD daemon reload"
+
+- name: "Run notified handlers now"
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable a timer unit for dnf-automatic
+  ansible.builtin.systemd_service:
+    name: modmaster-backup.timer
+    state: started
+    enabled: true

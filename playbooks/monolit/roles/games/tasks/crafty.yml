@@ -1,0 +1,63 @@
+---
+- name: "Games/crafty: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: 1000  # Crafty user
+    group: 0     # Crafty group
+    mode: "0755"
+  loop: "{{ _quadlet.mount_src }}"
+
+- name: "Games/crafty: Create systemd-tmpfiles configuration file"
+  ansible.builtin.copy:
+    dest: "/etc/tmpfiles.d/crafty-imports.conf"
+    content: |  # 1000:0  Crafty user/group
+      # Managed by Ansible
+      d  /tmp/crafty-imports  0755  1000  0  -  -
+    mode: '0644'
+
+- name: "Games/crafty: Render config"
+  ansible.builtin.template:
+    src: crafty/default.json.j2
+    dest: "{{ _quadlet.mount_src[1] }}default.json"
+    owner: 1000  # Crafty user
+    group: 0     # Crafty group
+    mode: '0644'
+  vars:
+    config: "{{ services[ansible_role_name].config.crafty }}"
+
+- name: "Games/crafty: Run systemd-tmpfiles"
+  ansible.builtin.command:
+    cmd: systemd-tmpfiles --create
+    creates: /tmp/crafty-imports
+
+- name: "Games/crafty: Generate a quadlet"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    env:
+      TZ: Asia/Baku
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/crafty/servers:Z"
+      - "{{ _quadlet.mount_src[1] }}:/crafty/app/config:Z"
+      - "{{ _quadlet.mount_src[2] }}:/crafty/backups:Z"
+      - "{{ _quadlet.mount_src[3] }}:/crafty/logs:Z"
+      - /tmp/crafty-imports:/crafty/import:Z
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: 16
+    quadlet_options: "{{ _quadlet.options }}"
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - containers.target
+    systemd_install:
+      WantedBy:
+        - containers.target
+  notify: "SystemD daemon reload"

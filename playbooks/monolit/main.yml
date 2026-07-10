@@ -10,6 +10,9 @@
   hosts: kvm_hosts
   become: true
   roles:
+    - role: games
+      tags:
+        - games
     - role: forge
       tags:
         - forge

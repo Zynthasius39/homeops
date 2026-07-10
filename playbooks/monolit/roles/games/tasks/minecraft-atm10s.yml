@@ -1,0 +1,71 @@
+---
+- name: "Games/minecraft-atm10s: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+    mode: "0755"
+  loop: "{{ _quadlet.mount_src[:-1] }}"
+
+- name: "Games/minecraft-atm10s: Create backup directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  loop: "{{ _quadlet.mount_src[-1:] }}"
+
+- name: "Games/minecraft-atm10s: Get quadlet user info"
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ _quadlet.owner }}"
+
+- name: "Games/minecraft-atm10s: Get quadlet group info"
+  ansible.builtin.getent:
+    database: group
+    key: "{{ _quadlet.group }}"
+
+- name: "Games/minecraft-atm10s: Generate a quadlet"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    interactive: true
+    tty: true
+    workdir: /data
+    entrypoint: /bin/sh
+    command: /data/run.sh
+    stop_signal: 2
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    image: "{{ _quadlet.image }}"
+    user: "{{ ansible_facts.getent_passwd[_quadlet.owner].1 }}:{{ ansible_facts.getent_group[_quadlet.group].1 }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/data:Z"
+      - "{{ _quadlet.mount_src[1] }}:/data/backups"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: 8
+    memory: 6G
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service.rstrip() }}
+        TimeoutStopSec=300
+
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - containers.target
+    systemd_install:
+      WantedBy:
+        - containers.target
+  notify: "SystemD daemon reload"

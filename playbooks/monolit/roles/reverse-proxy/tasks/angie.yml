@@ -2,8 +2,8 @@
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
-    owner: 100  # Angie User
-    group: 101  # Angie Group
+    owner: 0  # Angie User
+    group: 0  # Angie Group
     mode: "0755"
   loop: "{{ _quadlet.mount_src[:-2] }}"
 
@@ -30,7 +30,7 @@
           - "{{ _quadlet.mount_src[1] }}:/etc/angie/conf:Z"
           - "{{ _quadlet.mount_src[2] }}:/usr/share/angie/html:Z"
           - "{{ _quadlet.mount_src[3] }}:/var/lib/angie/acme:Z"
-          - "{{ _quadlet.mount_src[4] }}:/var/log/angie:Z"
+          - "{{ _quadlet.mount_src[4] }}:/var/log/angie:z"
       internal:
         networks:
           - "{{ _quadlet.networks[1] }}"

@@ -3,18 +3,10 @@
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     state: directory
-    owner: "{{ _quadlet.owner }}"
-    group: "{{ _quadlet.group }}"
+    owner: 472  # Grafana user
+    group: 0    # Grafana group
     mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
-
-- name: "Telemetry/grafana: Change volume permissions"
-  ansible.builtin.file:
-    path: "{{ _quadlet.mount_src[0] | dirname }}"
-    state: directory
-    owner: "472"
-    group: "0"
-    mode: "0755"
 
 - name: "Telemetry/grafana: Generate quadlets"
   containers.podman.podman_container:
@@ -53,6 +45,8 @@
   ansible.builtin.template:
     src: grafana-datasources.yaml.j2
     dest: "{{ _quadlet.mount_src[1] }}"
+    owner: 472  # Grafana user
+    group: 0    # Grafana group
     mode: '0644'
   vars:
     config: "{{ services[ansible_role_name].config }}"

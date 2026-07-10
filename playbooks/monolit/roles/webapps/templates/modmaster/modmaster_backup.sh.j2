@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euo pipefail
+
+source "{{ _quadlet.env }}"
+HTML_DIR="{{ _quadlet.mount_src[0] }}"
+DATE="$(date +%Y%m%d-%H%M%S)"
+
+podman exec {{ _quadlet.name }} \
+  mariadb-dump "$MARIADB_DATABASE" \
+  -u root -p"$MARIADB_ROOT_PASSWORD" \
+  | zstd -6 - >"$BACKUP_DIR/${DATE}_wordpress-db.zst)"
+
+cd "$HTML_DIR" && tar -c .[!.]* * | zstd -6 - >"$BACKUP_DIR/${DATE}_wordpress-html.tar.zst)"
+
+chown 1000:1000 -R "$BACKUP_DIR/${DATE}_wordpress-{db,html.tar}.zst"
+
+COUNTER=0
+for F in $(find "$BACKUP_DIR" -type f -name "${DATE}_wordpress-db.zst" -printf "%T+\t%p\n" | sort -r | awk '{print $2}'); do
+  [[ $COUNTER == 6 ]] && rm "$F"
+  let COUNTER=COUNTER+1
+done
+
+COUNTER=0
+for F in $(find "$BACKUP_DIR" -type f -name "${DATE}_wordpress-html.tar.zst" -printf "%T+\t%p\n" | sort -r | awk '{print $2}'); do
+  [[ $COUNTER == 6 ]] && rm "$F"
+  let COUNTER=COUNTER+1
+done

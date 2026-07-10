@@ -11,19 +11,27 @@
     - "{{ quadlet.data_dir }}"
 
 - name: "Webapps/hpage: Include tasks"
-  ansible.builtin.include_tasks: "hpage.yml"
+  ansible.builtin.include_tasks:
+    file: hpage.yml
+    apply:
+      tags: [webapps_hpage]
   vars:
     quadlet_mount_src:
       - "{{ _quadlet.data_dir ~ '/hpage-api/shared/' }}"
       - /var/log/beusproxy/
+  tags: [webapps_hpage]
 
 - name: "Webapps/modmaster: Include tasks"
-  ansible.builtin.include_tasks: "modmaster.yml"
+  ansible.builtin.include_tasks:
+    file: modmaster.yml
+    apply:
+      tags: [webapps_modmaster]
   vars:
     quadlet_mount_src:
-      - "{{ _quadlet.data ~ '/html/' }}"
+      - "{{ _quadlet.data_dir ~ '/modmaster-fpm/html/' }}"
       - "{{ _quadlet.data ~ '/data/' }}"
       - "{{ _quadlet.data ~ '/z-innodb-mariadb.ini' }}"
+  tags: [webapps_modmaster]
 
 - name: "Webapps: Generate environment files"
   ansible.builtin.template:

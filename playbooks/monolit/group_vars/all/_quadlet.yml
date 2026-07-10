@@ -6,6 +6,7 @@ _quadlet:  # quadlet internals
   env_dir: "{{ quadlet.env_dir | default('/var/lib/containers/env') | realpath }}"
   quadlet_dir: "{{ quadlet.quadlet_dir | default('/etc/containers/systemd') | realpath }}"
   container: "{{ quadlet_container | default(services[ansible_role_name].containers[_quadlet.name]) }}"
+  env_vars: "{{ quadlet_env_vars | default(services[ansible_role_name].env[_quadlet.name]) }}"
   name: "{{ quadlet_container_name }}"
   data: "{{ _quadlet.data_dir ~ '/' ~ _quadlet.name }}"
   env: "{{ quadlet_env | default(_quadlet.env_dir ~ '/' ~ _quadlet.name) }}.env"

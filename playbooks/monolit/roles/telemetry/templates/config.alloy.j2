@@ -68,7 +68,7 @@ loki.source.file "reverse_proxy" {
 		__path__    = "/host/log/angie-*/*log",
 		job         = "varlogs",
 	}]
-	forward_to = [loki.write.default.receiver]
+	forward_to = [loki.process.filter_prometheus_scrapes.receiver]
 
 	file_match {
 		enabled = true
@@ -76,6 +76,15 @@ loki.source.file "reverse_proxy" {
 	legacy_positions_file = "/tmp/positions.yaml"
 }
 {% endif %}
+
+loki.process "filter_prometheus_scrapes" {
+  stage.drop {
+    source = ""
+    expression = `(?P<prometheus_scrape>GET /p8s.*Prometheus)`
+    drop_counter_reason = "noisy"
+  }
+  forward_to = [loki.write.default.receiver]
+}
 
 loki.write "default" {
 	endpoint {

@@ -115,7 +115,6 @@
       volume_dirs,
       quadlet_gen,
       copy_etc,
-      copy_data,
       render_default,
       render_proxy,
       render_angie
@@ -125,32 +124,28 @@
   ansible.builtin.service:
     name: "{{ _quadlet.name }}.service"
     state: restarted
+  register: service_restart
   when: >
     (
       [
         volume_dirs,
         quadlet_gen,
+      ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+    ) and service_status.status is defined
+      and service_status.status.ActiveState == "active"
+
+- name: "Reverse-proxy/angie: Reload if service was running"
+  containers.podman.podman_container_exec:
+    name: "{{ _quadlet.name }}"
+    command: angie -s reload
+  when: >
+    (
+      [
         copy_etc,
-        copy_data,
         render_default,
         render_proxy,
         render_angie
       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
-    ) and service_status.status is defined and service_status.status.ActiveState == "active"
-
-# - name: "Reverse-proxy/angie: Reload if service was running"
-#   containers.podman.podman_container_exec:
-#     name: "{{ _quadlet.name }}"
-#     command: angie -s reload
-#   when: >
-#     (
-#       [
-#         volume_dirs,
-#         quadlet_gen,
-#         copy_etc,
-#         copy_data,
-#         render_default,
-#         render_proxy,
-#         render_angie
-#       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
-#     ) and service_status.status is defined and service_status.status.ActiveState == "active"
+    ) and service_status.status is defined
+      and service_status.status.ActiveState == "active"
+      and not service_restart.changed

@@ -8,28 +8,35 @@
     mode: "0755"
   loop: "{{ _quadlet.mount_src }}"
 
-- name: "Telemetry/alloy: Copy custom SELinux CIL module"
-  ansible.builtin.copy:
-    src: selinux/alloy.cil
-    dest: "{{ selinux_local_module_path }}"
-    mode: '0644'
-  when: ansible_facts.selinux.status == "enabled"
-  register: cil_file
-
-- name: "Telemetry/alloy: Install SELinux CIL module"
-  ansible.builtin.shell: semodule -i selinux/alloy.cil /usr/share/udica/templates/{base_container.cil,log_container.cil}
-  changed_when: "{{ cil_file.changed }}"
-  when:
-    - ansible_facts.selinux.status == "enabled"
-    - cil_file.changed
+# - name: "Telemetry/alloy: Copy custom SELinux CIL module"
+#   ansible.builtin.copy:
+#     src: selinux/alloy.cil
+#     dest: "{{ selinux_local_module_path }}"
+#     mode: '0644'
+#   when: ansible_facts.selinux.status == "enabled"
+#   register: cil_file
+#
+# - name: "Telemetry/alloy: Install SELinux CIL module"
+#   ansible.builtin.shell: semodule -i selinux/alloy.cil /usr/share/udica/templates/{base_container.cil,log_container.cil}
+#   changed_when: "{{ cil_file.changed }}"
+#   when:
+#     - ansible_facts.selinux.status == "enabled"
+#     - cil_file.changed
 
 - name: "Telemetry/alloy: Generate quadlets"
   containers.podman.podman_container:
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+    env:
+      ALLOY_DEPLOY_MODE: docker
     volume:
-      - "{{ _quadlet.mount_src[0] }}:/etc/alloy/config.alloy:Z,ro"
+      - "{{ _quadlet.mount_src[0] }}:/etc/alloy/config.alloy:Z"
       - /var/log:/host/log:ro
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"

@@ -1,0 +1,6 @@
+---
+_services:
+  root: "{{ services[ansible_role_name] }}"
+  config: "{{ services[ansible_role_name].config }}"
+  env: "{{ services[ansible_role_name].env }}"
+  containers: "{{ services[ansible_role_name].containers }}"

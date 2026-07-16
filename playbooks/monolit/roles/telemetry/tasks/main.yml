@@ -73,16 +73,16 @@
     quadlet_memory: 1G
   tags: [telemetry_prometheus]
 
-- name: "Telemetry/prometheus-node-exporter"
-  ansible.builtin.include_tasks:
-    file: prometheus-node-exporter.yml
-    apply:
-      tags: [telemetry_prometheus-node-exporter]
-  vars:
-    quadlet_container_name: prometheus-node-exporter
-    quadlet_cpus: 1
-    quadlet_memory: 128M
-  tags: [telemetry_node-exporter]
+# - name: "Telemetry/prometheus-node-exporter"
+#   ansible.builtin.include_tasks:
+#     file: prometheus-node-exporter.yml
+#     apply:
+#       tags: [telemetry_prometheus-node-exporter]
+#   vars:
+#     quadlet_container_name: prometheus-node-exporter
+#     quadlet_cpus: 1
+#     quadlet_memory: 128M
+#   tags: [telemetry_node-exporter]
 
 - name: "Telemetry/prometheus-podman-exporter"
   ansible.builtin.include_tasks:

@@ -13,6 +13,8 @@
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    env:
+      GF_SERVER_ROOT_URL: "{{ _services.config.grafana_server_root_url }}"
     volume:
       - "{{ _quadlet.mount_src[0] }}:/var/lib/grafana:Z"
       - "{{ _quadlet.mount_src[1] }}:/etc/grafana/provisioning/datasources/datasources.yaml:Z,ro"

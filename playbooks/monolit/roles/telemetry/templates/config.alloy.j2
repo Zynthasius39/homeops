@@ -1,10 +1,65 @@
-prometheus.exporter.unix "{{ inventory_hostname }}" {
-  rootfs_path = "/host"
+// ###############################
+// #### Metrics Configuration ####
+// ###############################
+
+// ######## Node Metrics #########
+
+discovery.relabel "integrations_node_exporter" {
+  targets = prometheus.exporter.unix.integrations_node_exporter.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+
+  rule {
+    target_label = "job"
+    replacement = "integrations/node_exporter"
+  }
 }
 
-prometheus.scrape "{{ inventory_hostname }}" {
-  targets    = prometheus.exporter.unix.jellybean.targets
-  forward_to = [prometheus.remote_write.jellybean.receiver]
+prometheus.exporter.unix "integrations_node_exporter" {
+  disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs", "zfs"]
+  enable_collectors = ["meminfo"]
+
+  filesystem {
+    fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
+    mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+|var/lib/containers/.+)($|/)"
+    mount_timeout        = "5s"
+  }
+
+  netclass {
+    ignored_devices = "^(veth.*|cali.*|[a-f0-9]{15})$"
+  }
+
+  netdev {
+    // Exclude virtual and container network interfaces from device metrics
+    device_exclude = "^(veth.*|cali.*|[a-f0-9]{15})$"
+  }
+}
+
+prometheus.scrape "default" {
+  targets = concat(
+    discovery.relabel.integrations_node_exporter.output,
+    [
+{% for target in config.alloy_prometheus_targets %}
+      {
+        __address__ = "{{ target.address }}",
+        job = "{{ target.job }}",
+        instance = "{{ target.instance }}",
+{% if target.metrics_path is defined %}
+        __metrics_path__ = "{{ target.metrics_path }}",
+{% endif %}
+{% if target.labels is defined %}
+{% for label, value in target.labels.items() %}
+        {{ label }} = "{{ value }}",
+{% endfor %}
+{% endif %}
+      },
+{% endfor %}
+    ])
+  forward_to = [prometheus.remote_write.{{ inventory_hostname }}.receiver]
+  scrape_interval = "15s"
 }
 
 prometheus.remote_write "{{ inventory_hostname }}" {
@@ -12,6 +67,10 @@ prometheus.remote_write "{{ inventory_hostname }}" {
     url = "{{ config.prometheus_uri }}/api/v1/write"
   }
 }
+
+// ###############################
+// #### Logging Configuration ####
+// ###############################
 
 discovery.relabel "journal" {
 	targets = []
@@ -41,7 +100,7 @@ loki.source.journal "journal" {
 	max_age       = "12h0m0s"
 	path          = "/host/log/journal"
 	relabel_rules = discovery.relabel.journal.rules
-	forward_to    = [loki.write.default.receiver]
+	forward_to    = [loki.write.{{ inventory_hostname }}.receiver]
 	labels        = {
 		job = "systemd-journal",
 	}
@@ -53,7 +112,7 @@ loki.source.file "system" {
 		__path__    = "/host/log/*log",
 		job         = "varlogs",
 	}]
-	forward_to = [loki.write.default.receiver]
+	forward_to = [loki.write.{{ inventory_hostname }}.receiver]
 
 	file_match {
 		enabled = true
@@ -83,12 +142,13 @@ loki.process "filter_prometheus_scrapes" {
     expression = `(?P<prometheus_scrape>GET http \S+ "/p8s" [^"]*"Prometheus[^"]*")`
     drop_counter_reason = "noisy"
   }
-  forward_to = [loki.write.default.receiver]
+  forward_to = [loki.write.{{ inventory_hostname }}.receiver]
 }
 
-loki.write "default" {
+loki.write "{{ inventory_hostname }}" {
 	endpoint {
 		url = "{{ config.loki_uri }}/loki/api/v1/push"
 	}
 	external_labels = {}
 }
+

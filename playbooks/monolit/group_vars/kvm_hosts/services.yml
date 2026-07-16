@@ -91,24 +91,53 @@ services:
       loki_uri: http://10.0.50.92:3100
       tempo_uri: http://10.0.50.94:3200
       prometheus_uri: http://10.0.50.96:9090
+      grafana_server_root_url: https://grafana.alakx.com
       apc_host: 10.0.50.99
-      jobs:
-        - name: prometheus
-          targets: ["127.0.0.1:9090"]
+      alloy_prometheus_targets:
+        - instance: "{{ inventory_hostname }}"
+          job: prometheus
+          address: "127.0.0.1:9090"
+        # - instance: "{{ inventory_hostname }}"
+        #   job: tempo
+        #   address: "10.0.50.94:3200"
+        # - instance: "{{ inventory_hostname }}"
+        #   job: node-exporter
+        #   address: "10.0.50.2:9100"
+        - instance: "{{ inventory_hostname }}"
+          job: podman-exporter
+          address: "10.0.50.2:9882"
+        - instance: "{{ inventory_hostname }}"
+          job: apcupsd-exporter
+          address: "10.0.50.101:9162"
+        - instance: "{{ inventory_hostname }}"
+          job: angie
+          address: 10.0.50.1
+          metrics_path: /p8s
+          labels:
+            facing: public
+        - instance: "{{ inventory_hostname }}"
+          job: angie
+          address: 10.0.50.23
+          metrics_path: /p8s
+          labels:
+            facing: internal
+      prometheus_scrape_configs: []
+        # - name: prometheus
+        #   targets: ["127.0.0.1:9090"]
         # - name: tempo
         #   targets: ["10.0.50.94:3200"]
-        - name: linux
-          targets: ["10.0.50.2:9100"]
-        - name: podman
-          targets: ["10.0.50.2:9882"]
-        - name: apcups
-          targets: ["10.0.50.101:9162"]
-        - name: angie-public
-          targets: ["10.0.50.1"]
-          metrics_path: /p8s
-        - name: angie-internal
-          targets: ["10.0.50.23"]
-          metrics_path: /p8s
+        # - name: linux
+        #   targets: ["10.0.50.2:9100"]
+        # - name: podman
+        #   targets: ["10.0.50.2:9882"]
+        # - name: apcups
+        #   targets: ["10.0.50.101:9162"]
+        # - name: angie-public
+        #   targets: ["10.0.50.1"]
+        #   metrics_path: /p8s
+        # - name: angie-internal
+        #   targets: ["10.0.50.23"]
+        #   metrics_path: /p8s
   pki:
     containers:
       step-ca:

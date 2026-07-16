@@ -94,9 +94,9 @@ services:
       apc_host: 10.0.50.99
       jobs:
         - name: prometheus
-          targets: ["localhost:9090"]
-        - name: tempo
-          targets: ["10.0.50.94:3200"]
+          targets: ["127.0.0.1:9090"]
+        # - name: tempo
+        #   targets: ["10.0.50.94:3200"]
         - name: linux
           targets: ["10.0.50.2:9100"]
         - name: podman
@@ -104,7 +104,10 @@ services:
         - name: apcups
           targets: ["10.0.50.101:9162"]
         - name: angie-public
-          targets: ["root.alakx.com"]
+          targets: ["10.0.50.1"]
+          metrics_path: /p8s
+        - name: angie-internal
+          targets: ["10.0.50.23"]
           metrics_path: /p8s
   pki:
     containers:

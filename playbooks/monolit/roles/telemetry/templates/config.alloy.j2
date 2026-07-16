@@ -80,7 +80,7 @@ loki.source.file "reverse_proxy" {
 loki.process "filter_prometheus_scrapes" {
   stage.drop {
     source = ""
-    expression = `(?P<prometheus_scrape>GET /p8s.*Prometheus)`
+    expression = `(?P<prometheus_scrape>GET http \S+ "/p8s" [^"]*"Prometheus[^"]*")`
     drop_counter_reason = "noisy"
   }
   forward_to = [loki.write.default.receiver]

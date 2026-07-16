@@ -19,7 +19,7 @@
       - --enable-feature=exemplar-storage
       - --enable-feature=native-histograms
     volume:
-      - "{{ _quadlet.mount_src[0] }}:/etc/prometheus.yaml:Z,ro"
+      - "{{ _quadlet.mount_src[0] }}:/etc/prometheus.yaml:Z"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
@@ -43,6 +43,7 @@
     systemd_install:
       WantedBy:
         - telemetry.target
+  register: quadlet_gen
   notify: "SystemD daemon reload"
 
 - name: "Telemetry/prometheus: Render etc"
@@ -52,3 +53,43 @@
     mode: '0644'
   vars:
     config: "{{ services[ansible_role_name].config }}"
+  register: render_etc
+
+- name: "Telemetry/prometheus: Run notified handlers now"
+  ansible.builtin.meta: flush_handlers
+
+- name: "Telemetry/prometheus: Check if service is running"
+  ansible.builtin.systemd:
+    name: "{{ _quadlet.name }}.service"
+  register: service_status
+  when: >
+    [
+      quadlet_gen,
+      render_etc
+    ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+
+- name: "Telemetry/prometheus: Restart if service was running"
+  ansible.builtin.service:
+    name: "{{ _quadlet.name }}.service"
+    state: restarted
+  register: service_restart
+  when: >
+    (
+      [
+        quadlet_gen
+      ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+    ) and service_status.status is defined
+      and service_status.status.ActiveState == "active"
+
+- name: "Telemetry/prometheus: Reload if service was running"
+  containers.podman.podman_container_exec:
+    name: "{{ _quadlet.name }}"
+    command: killall -HUP prometheus
+  when: >
+    (
+      [
+        render_etc
+      ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+    ) and service_status.status is defined
+      and service_status.status.ActiveState == "active"
+      and not service_restart.changed

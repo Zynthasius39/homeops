@@ -103,7 +103,7 @@
     mode: "0644"
   register: render_angie
 
-- name: "Run notified handlers now"
+- name: "Reverse-proxy/angie: Run notified handlers now"
   ansible.builtin.meta: flush_handlers
 
 - name: "Reverse-proxy/angie: Check if service is running"
@@ -112,7 +112,6 @@
   register: service_status
   when: >
     [
-      volume_dirs,
       quadlet_gen,
       copy_etc,
       render_default,
@@ -128,8 +127,8 @@
   when: >
     (
       [
-        volume_dirs,
         quadlet_gen,
+        render_angie
       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
     ) and service_status.status is defined
       and service_status.status.ActiveState == "active"
@@ -144,7 +143,6 @@
         copy_etc,
         render_default,
         render_proxy,
-        render_angie
       ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
     ) and service_status.status is defined
       and service_status.status.ActiveState == "active"

@@ -39,6 +39,7 @@ http {
   ssl_certificate_key $acme_cert_key_stepca;
 
   include /etc/angie/conf/http.d/include/log-proxy.conf;
+  include prometheus_all.conf;
 
   map $host $forward_scheme {
     default http;

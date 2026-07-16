@@ -14,7 +14,13 @@ server {
   server_name {{ host.hostname | join(' ') }};
 {% endif %}
 
-  return 301 https://$host$request_uri;
+  location =/p8s {
+    prometheus all;
+  }
+
+  location / {
+    return 301 https://$host$request_uri;
+  }
 }
 {% endif %}
 

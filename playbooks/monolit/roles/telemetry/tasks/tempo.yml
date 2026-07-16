@@ -37,8 +37,10 @@
       - |
 
         {{ _quadlet.__systemd_service }}
-        {{ _quadlet.__systemd_unit }}
-        {{ _quadlet.__systemd_install.rstrip() }}
+        {{ _quadlet.__systemd_unit.rstrip() }}
+      # - |
+      #   {{ _quadlet.__systemd_unit }}
+      #   {{ _quadlet.__systemd_install.rstrip() }}
   vars:
     systemd_service:
       Restart: always

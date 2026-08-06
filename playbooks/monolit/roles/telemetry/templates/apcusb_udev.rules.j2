@@ -1,0 +1,1 @@
+SUBSYSTEM=="usb", ATTR{idVendor}=="{{ config.usb.vendor_id }}", ATTR{idProduct}=="{{ config.usb.product_id }}", SYMLINK+="{{ apc_usb_dev }}", MODE="0660", GROUP="plugdev"

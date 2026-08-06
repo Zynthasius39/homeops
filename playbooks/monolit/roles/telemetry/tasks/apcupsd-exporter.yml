@@ -8,7 +8,7 @@
       PUID: 1000
       PGID: 1000
       TZ: Asia/Baku
-      APC_HOST: "{{ services[ansible_role_name].config.apc_host }}"
+      APC_HOST: "{{ services[ansible_role_name].config.apcupsd.host }}"
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"

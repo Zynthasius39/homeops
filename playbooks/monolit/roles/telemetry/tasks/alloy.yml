@@ -62,6 +62,7 @@
     systemd_install:
       WantedBy:
         - telemetry.target
+  register: quadlet_gen
   notify: "SystemD daemon reload"
 
 - name: "Telemetry/alloy: Render etc"
@@ -71,3 +72,47 @@
     mode: '0644'
   vars:
     config: "{{ services[ansible_role_name].config }}"
+
+- name: "Telemetry/alloy: Validate config"
+  containers.podman.podman_container_exec:
+    name: "{{ _quadlet.name }}"
+    command: alloy validate /etc/alloy/config.alloy
+
+- name: "Telemetry/alloy: Run notified handlers now"
+  ansible.builtin.meta: flush_handlers
+
+- name: "Telemetry/alloy: Check if service is running"
+  ansible.builtin.systemd:
+    name: "{{ _quadlet.name }}.service"
+  register: service_status
+  when: >
+    [
+      quadlet_gen,
+      render_alloy
+    ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+
+- name: "Telemetry/alloy: Restart if service was running"
+  ansible.builtin.service:
+    name: "{{ _quadlet.name }}.service"
+    state: restarted
+  register: service_restart
+  when: >
+    (
+      [
+        quadlet_gen
+      ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+    ) and service_status.status is defined
+      and service_status.status.ActiveState == "active"
+
+- name: "Telemetry/alloy: Reload if service was running"
+  containers.podman.podman_container_exec:
+    name: "{{ _quadlet.name }}"
+    command: angie -s reload
+  when: >
+    (
+      [
+        render_alloy
+      ] | selectattr('changed', 'defined') | selectattr('changed') | list | length > 0
+    ) and service_status.status is defined
+      and service_status.status.ActiveState == "active"
+      and not service_restart.changed

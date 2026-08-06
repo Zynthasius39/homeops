@@ -83,6 +83,10 @@ services:
         ip: 10.0.50.97
         network: macv50
         image: docker.io/prom/graphite-exporter:v0.16.0
+      apcupsd:
+        ip: 10.0.50.99
+        network: macv50
+        image: docker.io/gregewing/apcupsd@sha256:5f9bfb2dde4622831bf3a4dadf3e999fa99bfcf287dedb34833c1a090d5521a4
       apcupsd-exporter:
         ip: 10.0.50.101
         network: macv50
@@ -92,7 +96,16 @@ services:
       tempo_uri: http://10.0.50.94:3200
       prometheus_uri: http://10.0.50.96:9090
       grafana_server_root_url: https://grafana.alakx.com
-      apc_host: 10.0.50.99
+      apcupsd:
+        host: 10.0.50.99
+        hostname: UPS.home.alak
+        shutdown:
+          battery_left_percent: 5
+          battery_left_minutes: 5
+          battery_timer_seconds: 1200  # 20 minutes
+        usb:
+          vendor_id: "051d"
+          product_id: "0002"
       alloy_prometheus_targets:
         - instance: "{{ inventory_hostname }}"
           job: prometheus

@@ -1,0 +1,66 @@
+---
+- name: "Telemetry/apcupsd: Create volume directories"
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    state: directory
+    owner: "{{ _quadlet.owner }}"
+    group: "{{ _quadlet.group }}"
+    mode: "0755"
+  loop: "{{ _quadlet.mount_src }}"
+
+- name: "Telemetry/apcupsd: Deploy udev rule for USB device"
+  ansible.builtin.template:
+    src: apcusb_udev.rules.j2
+    dest: /etc/udev/rules.d/10-apcusb.rules
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    config: "{{ services[ansible_role_name].config.apcupsd }}"
+  notify:
+    - Reload udev rules
+    - Trigger udev
+
+- name: "Telemetry/apcupsd: Render apcupsd config"
+  ansible.builtin.template:
+    src: apcupsd.conf.j2
+    dest: "{{ _quadlet.data ~ '/apcupsd.conf' }}"
+    mode: "0644"
+  vars:
+    config: "{{ services[ansible_role_name].config.apcupsd }}"
+
+- name: "Telemetry/apcupsd: Generate quadlets"
+  containers.podman.podman_container:
+    name: "{{ _quadlet.name }}"
+    state: quadlet
+    quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    volume:
+      - "{{ _quadlet.mount_src[0] }}:/etc/apcupsd/apcupsd.conf:Z"
+      - "/var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket"
+    device:
+      - /dev/{{ apc_usb_dev }}
+    privileged: true
+    image: "{{ _quadlet.image }}"
+    dns: "{{ _quadlet.dns }}"
+    network: "{{ _quadlet.network }}"
+    ip: "{{ _quadlet.ip }}"
+    mac_address: "{{ _quadlet.mac_address }}"
+    cpus: "{{ _quadlet.cpus }}"
+    memory: "{{ _quadlet.memory }}"
+    quadlet_options:
+      - "AutoUpdate=registry"
+      - |
+
+        {{ _quadlet.__systemd_service }}
+        {{ _quadlet.__systemd_unit }}
+        {{ _quadlet.__systemd_install.rstrip() }}
+  vars:
+    systemd_service:
+      Restart: always
+    systemd_unit:
+      After:
+        - telemetry.target
+    systemd_install:
+      WantedBy:
+        - telemetry.target
+  notify: "SystemD daemon reload"

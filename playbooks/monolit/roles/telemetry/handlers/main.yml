@@ -1,12 +1,22 @@
 ---
-- name: "SystemD daemon reload"
+- name: SystemD daemon reload
   ansible.builtin.systemd_service:
     daemon_reload: true
   notify: "SystemD enable telemetry target"
 
-- name: "SystemD enable and start telemetry target"
+- name: SystemD enable and start telemetry target
   ansible.builtin.service:
     state: started
     enabled: true
     name: telemetry.target
   listen: "SystemD daemon reload"
+
+- name: Reload udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  changed_when: false
+  listen: Reload udev rules
+
+- name: Trigger udev
+  ansible.builtin.command: udevadm trigger
+  changed_when: false
+  listen: Trigger udev

@@ -1,1 +1,2 @@
 selinux_local_module_path: /etc/selinux/local/
+apc_usb_dev: usb/apcusb0

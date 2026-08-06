@@ -4,20 +4,6 @@
 
 // ######## Node Metrics #########
 
-discovery.relabel "integrations_node_exporter" {
-  targets = prometheus.exporter.unix.integrations_node_exporter.targets
-
-  rule {
-    target_label = "instance"
-    replacement  = "{{ inventory_hostname }}"
-  }
-
-  rule {
-    target_label = "job"
-    replacement = "integrations/node_exporter"
-  }
-}
-
 prometheus.exporter.unix "integrations_node_exporter" {
   disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs", "zfs"]
   enable_collectors = ["meminfo"]
@@ -38,8 +24,22 @@ prometheus.exporter.unix "integrations_node_exporter" {
   }
 }
 
+discovery.relabel "integrations_node_exporter" {
+  targets = prometheus.exporter.unix.integrations_node_exporter.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+
+  rule {
+    target_label = "job"
+    replacement = "integrations/node_exporter"
+  }
+}
+
 prometheus.scrape "default" {
-  targets = concat(
+  targets = array.concat(
     discovery.relabel.integrations_node_exporter.output,
     [
 {% for target in config.alloy_prometheus_targets %}

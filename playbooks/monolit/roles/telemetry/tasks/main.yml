@@ -108,6 +108,19 @@
     quadlet_memory: 128M
   tags: [telemetry_graphite-exporter]
 
+- name: "Telemetry/apcupsd"
+  ansible.builtin.include_tasks:
+    file: apcupsd.yml
+    apply:
+      tags: [telemetry_apcupsd]
+  vars:
+    quadlet_container_name: apcupsd
+    quadlet_mount_src:
+      - "{{ _quadlet.data ~ '/apcupsd.conf' }}"
+    quadlet_cpus: 1
+    quadlet_memory: 128M
+  tags: [telemetry_apcupsd]
+
 - name: "Telemetry/apcupsd-exporter"
   ansible.builtin.include_tasks:
     file: apcupsd-exporter.yml

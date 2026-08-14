@@ -1,0 +1,5 @@
+# Build
+build/
+
+# Local device credentials
+main/secrets.h

@@ -2,6 +2,9 @@
 - name: Provision OPNsense
   hosts: firewalls
   roles:
-    - bind
-  tags:
-    - dns
+    - role: bind
+      tags:
+        - dns
+    - role: hwswitch
+      tags:
+        - hwswitch

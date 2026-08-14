@@ -1,0 +1,25 @@
+---
+- name: Install Huawei switch utility
+  ansible.builtin.template:
+    src: hwswitch.sh.j2
+    dest: /usr/local/sbin/hwswitch
+    owner: root
+    group: wheel
+    mode: "0755"
+  no_log: true
+
+- name: Install Huawei switch startup hook
+  ansible.builtin.copy:
+    src: hwswitch-start.sh
+    dest: /usr/local/etc/rc.syshook.d/start/50-hwswitch
+    owner: root
+    group: wheel
+    mode: "0755"
+
+- name: Install Huawei switch shutdown hook
+  ansible.builtin.copy:
+    src: hwswitch-stop.sh
+    dest: /usr/local/etc/rc.syshook.d/stop/50-hwswitch
+    owner: root
+    group: wheel
+    mode: "0755"

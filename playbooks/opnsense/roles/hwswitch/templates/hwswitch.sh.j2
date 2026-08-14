@@ -1,0 +1,215 @@
+#!/bin/sh
+# ==============================================================================
+# Script Name   : hwswitch
+# Description   : Automated WAN/DHCP switcher for Huawei routers
+# Author        : Zynthasius39
+# License       : MIT
+# Version       : 1.2.0
+# ==============================================================================
+# Usage:
+#   ./hwswitch [OPTIONS] [STATE]
+#
+# Arguments:
+#   STATE              1 (Enable), 0 (Disable), or omit to toggle current state
+#
+# Examples:
+#   ./hwswitch 1                      # Enable DHCP/Internet gateway
+#   ./hwswitch 0                      # Disable DHCP/Internet gateway
+#   ./hwswitch                        # Toggle connection state automatically
+#   ./hwswitch -i 10.0.10.17 1        # Target custom IP address
+# ==============================================================================
+
+# Exit on command errors. POSIX sh does not support Bash's pipefail option.
+set -e
+
+# ------------------------------------------------------------------------------
+# CONFIGURATION & DEFAULTS
+# ------------------------------------------------------------------------------
+USER_AGENT="OPNSense-Automation/1.0 (gateway-switchover)"
+ROUTER_IP="${ROUTER_IP:-10.0.10.17}"
+TIMEOUT="${TIMEOUT:-5}"
+ACTION=""
+COOKIE=""
+
+# ------------------------------------------------------------------------------
+# HELP / USAGE DISPLAY
+# ------------------------------------------------------------------------------
+usage() {
+  cat <<EOF
+Usage: ${0##*/} [OPTIONS] [STATE]
+
+Arguments:
+  STATE              1 (Enable connection), 0 (Disable connection), or omit to TOGGLE
+
+Options:
+  -i, --ip IP        Set Huawei router IP address (default: ${ROUTER_IP})
+  -t, --timeout SEC  Set request timeout in seconds (default: ${TIMEOUT})
+  -h, --help         Display this help message and exit
+
+EOF
+  exit 1
+}
+
+# ------------------------------------------------------------------------------
+# CLI ARGUMENT PARSING
+# ------------------------------------------------------------------------------
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+  -i | --ip)
+    ROUTER_IP="$2"
+    shift 2
+    ;;
+  -t | --timeout)
+    TIMEOUT="$2"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  -*)
+    echo "Error: Unknown option $1" >&2
+    usage
+    ;;
+  *)
+    # Stop parsing flag options; remainder are positional arguments
+    break
+    ;;
+  esac
+done
+
+# Dynamically construct target URL using the IP address
+URL="http://${ROUTER_IP}"
+
+# ------------------------------------------------------------------------------
+# POSITIONAL PARAMETER EVALUATION (1, 0, or Toggle)
+# ------------------------------------------------------------------------------
+if [ "$#" -gt 0 ]; then
+  case "$1" in
+  1 | enable | on)
+    ACTION="1"
+    shift
+    ;;
+  0 | disable | off)
+    ACTION="0"
+    shift
+    ;;
+  *)
+    echo "Error: Invalid state '$1'. Expected 1, 0, or no argument." >&2
+    usage
+    ;;
+  esac
+else
+  ACTION="toggle"
+fi
+
+# ------------------------------------------------------------------------------
+# CORE CURL WRAPPER
+# ------------------------------------------------------------------------------
+hw_curl() {
+  hw_target_url=$1
+  shift
+
+  if [ -n "${COOKIE:-}" ]; then
+    curl -s --fail-with-body --connect-timeout "$TIMEOUT" \
+      -H "User-Agent: ${USER_AGENT}" -H "Cookie: ${COOKIE}" \
+      "$hw_target_url" "$@"
+  else
+    curl -s --fail-with-body --connect-timeout "$TIMEOUT" \
+      -H "User-Agent: ${USER_AGENT}" "$hw_target_url" "$@"
+  fi
+}
+
+# ------------------------------------------------------------------------------
+# LOGIC FUNCTIONS
+# ------------------------------------------------------------------------------
+
+# Executes the switch state workflow
+switch_router_state() {
+  target_state=$1 # 1 or 0
+
+  echo "[HWSwitch] Setting router state to: ${target_state} on ${URL}" >&2
+
+  # 1. Login: Get Random Count
+  rand_count=$(
+    hw_curl "${URL}/asp/GetRandCount.asp" -X POST | sed '1s/^\xef\xbb\xbf//'
+  )
+  echo "[HWSwitch] OK! Get random count for Login" >&2
+
+  # 2. Login: Get Auth Token / Set Cookie
+  COOKIE=$(
+    hw_curl \
+      "${URL}/login.cgi" \
+      -X POST \
+      -d "UserName={{ hwswitch.login.username }}&PassWord={{ hwswitch.login.password }}&Language=english&x.X_HW_Token=${rand_count}" \
+      -D - |
+      grep -i '^set-cookie:' |
+      tr -d '\r' |
+      cut -d' ' -f2-
+  )
+  echo "[HWSwitch] OK! Login" >&2
+
+  # 3. DHCP: Get ONTToken
+  ## Example snippet showing single-fetch extraction
+  dhcp_html=$(hw_curl "${URL}/html/bbsp/dhcpservercfg/dhcp2.asp")
+
+  ## Extract both values from the single response body
+  ont_token=$(printf '%s\n' "$dhcp_html" | sed -n 's/.*name="onttoken" .* value="\([^"]*\)".*/\1/p')
+  dhcp_state=$(printf '%s\n' "$dhcp_html" | sed -n 's/.*dhcpmainst("[^"]*","\([01]\).*/\1/p')
+
+  if [ "$dhcp_state" != "1" ] && [ "$dhcp_state" != "0" ]; then
+    echo "[HWSwitch] ERR: Failed to extract DHCP state from router HTML." >&2
+    return 1
+  fi
+
+  echo "[HWSwitch] OK! Get DHCP ONT Token and State" >&2
+
+  # # 4. DHCP: Enable/disable server
+  if [ "$ACTION" = "toggle" ]; then
+    target_state=$((1 - dhcp_state))
+    echo "[HWSwitch] Current state is ${dhcp_state}, toggling to ${target_state}..." >&2
+  else
+    target_state="$ACTION"
+    echo "[HWSwitch] Explicit state requested: ${target_state}..." >&2
+  fi
+
+  # 5. DHCP: Enable/disable server
+  hw_curl \
+    "${URL}/html/bbsp/dhcpservercfg/set.cgi?x=InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.2&y=InternetGatewayDevice.X_HW_DHCPSLVSERVER&z=InternetGatewayDevice.LANDevice.1.LANHostConfigManagement&RequestFile=html/bbsp/dhcpservercfg/dhcp2.asp" \
+    -X POST \
+    -d "y.DHCPEnable=0&z.DHCPServerEnable=${target_state}&z.X_HW_DHCPL2RelayEnable=1&z.X_HW_Option125Enable=1&z.X_HW_DNSList=&z.MinAddress=10.0.10.11&z.MaxAddress=10.0.10.254&z.DHCPLeaseTime=86400&x.X_HW_Token=${ont_token}" \
+    >/dev/null
+  echo "[HWSwitch] OK! Set DHCP server to ${target_state}" >&2
+
+  # 6. WAN: Get ONTToken
+  ont_token=$(
+    hw_curl "${URL}/html/bbsp/wan/wan.asp" |
+      sed -n 's/.*name="onttoken" .* value="\([^"]*\)".*/\1/p'
+  )
+
+  # 7. WAN: Enable/disable the connection
+  hw_curl \
+    "${URL}/html/bbsp/wan/complex.cgi?y=InternetGatewayDevice.WANDevice.1.WANConnectionDevice.4.WANPPPConnection.1&RequestFile=html/bbsp/wan/confirmwancfginfo.html" \
+    -X POST \
+    -d "y.Enable=${target_state}&y.X_HW_IPv4Enable=1&y.X_HW_IPv6Enable=0&y.X_HW_SERVICELIST=INTERNET&y.X_HW_ExServiceList=&y.X_HW_VLAN=3305&y.X_HW_PRI=0&y.X_HW_PriPolicy=Specified&y.X_HW_DefaultPri=0&y.ConnectionType=IP_Routed&y.X_HW_MultiCastVLAN=4294967295&y.NATEnabled=1&y.X_HW_NatType=0&y.Username={{ hwswitch.pppoe.username }}&y.Password={{ hwswitch.pppoe.password }}&y.X_HW_LcpEchoReqCheck=0&y.ConnectionTrigger=AlwaysOn&y.DNSEnabled=1&y.MaxMRUSize=1492&y.X_HW_BindPhyPortInfo=&X_HW_OverrideAllowed=0&x.X_HW_Token=${ont_token}" \
+    >/dev/null
+
+  # 8. Logout: Get Random Count
+  rand_count=$(
+    hw_curl "${URL}/html/ssmp/common/GetRandToken.asp" -X POST | sed '1s/^\xef\xbb\xbf//'
+  )
+  echo "[HWSwitch] OK! Get random count for Logout" >&2
+
+  # 9. Logout: Invalidate the Auth Token
+  hw_curl \
+    "${URL}/logout.cgi?RequestFile=html/logout.html" \
+    -X POST \
+    -d "x.X_HW_Token=${rand_count}" \
+    >/dev/null
+  echo "[HWSwitch] OK! Logout" >&2
+}
+
+# ==============================================================================
+# SCRIPT MAIN EXECUTION
+# ==============================================================================
+
+switch_router_state "$ACTION"

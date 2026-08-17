@@ -25,7 +25,7 @@ static const uint8_t TARGET_MAC[6] = {0x00, 0xc8, 0x7f, 0x68, 0x81, 0x7b};
 #define WIFI_CONNECT_WAIT_MS 10000
 #define RETRY_DELAY_MS       5000
 
-static const char *TAG = "Alakx_Python";
+static const char *TAG = "Somnus";
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 
@@ -162,7 +162,7 @@ static bool http_up(void)
   snprintf(url, sizeof(url), "https://api.telegram.org/bot%s/sendMessage",
            TELEGRAM_BOT_TOKEN);
   snprintf(json_payload, sizeof(json_payload),
-           "{\"chat_id\": \"%s\", \"text\": \"🔌 ESP32: Alakx Python is UP!\"}",
+           "{\"chat_id\": \"%s\", \"text\": \"🔌 ESP32: Somnus is UP!\"}",
            TELEGRAM_CHAT_ID);
 
   esp_http_client_config_t config = {

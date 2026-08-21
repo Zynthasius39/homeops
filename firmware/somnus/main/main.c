@@ -21,9 +21,11 @@
 static const uint8_t TARGET_MAC[6] = {0x00, 0xc8, 0x7f, 0x68, 0x81, 0x7b};
 
 // WoL UDP Port (7 or 9)
-#define WOL_PORT 9
+#define WOL_PORT             9
 #define WIFI_CONNECT_WAIT_MS 10000
 #define RETRY_DELAY_MS       5000
+// Delay before sending the WoL packet (10 minutes)
+#define WOL_DELAY_MS         (10 * 60 * 1000)
 
 static const char *TAG = "Somnus";
 static EventGroupHandle_t s_wifi_event_group;
@@ -155,43 +157,48 @@ static bool send_magic_packet(const uint8_t *mac_addr)
     return err >= 0;
 }
 
+static bool send_telegram(const char *message)
+{
+    char url[256];
+    char json_payload[512];
+    snprintf(url, sizeof(url), "https://api.telegram.org/bot%s/sendMessage",
+             TELEGRAM_BOT_TOKEN);
+    snprintf(json_payload, sizeof(json_payload),
+             "{\"chat_id\": \"%s\", \"text\": \"%s\"}",
+             TELEGRAM_CHAT_ID, message);
+
+    esp_http_client_config_t config = {
+        .url = url,
+        .method = HTTP_METHOD_POST,
+        .crt_bundle_attach = esp_crt_bundle_attach, // Requires TLS/SSL for HTTPS
+        .timeout_ms = 10000,
+    };
+
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE("TELEGRAM", "Unable to create HTTP client");
+        return false;
+    }
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+    esp_http_client_set_post_field(client, json_payload, strlen(json_payload));
+
+    esp_err_t err = esp_http_client_perform(client);
+    int status = esp_http_client_get_status_code(client);
+    bool success = err == ESP_OK && status >= 200 && status < 300;
+    if (success) {
+        ESP_LOGI("TELEGRAM", "Message sent! Status = %d", status);
+    } else {
+        ESP_LOGE("TELEGRAM", "Message failed (result: %s, status: %d)",
+                 esp_err_to_name(err), status);
+    }
+
+    esp_http_client_cleanup(client);
+    return success;
+}
+
 static bool http_up(void)
 {
-  char url[256];
-  char json_payload[512];
-  snprintf(url, sizeof(url), "https://api.telegram.org/bot%s/sendMessage",
-           TELEGRAM_BOT_TOKEN);
-  snprintf(json_payload, sizeof(json_payload),
-           "{\"chat_id\": \"%s\", \"text\": \"🔌 ESP32: Somnus is UP!\"}",
-           TELEGRAM_CHAT_ID);
-
-  esp_http_client_config_t config = {
-      .url = url,
-      .method = HTTP_METHOD_POST,
-      .crt_bundle_attach = esp_crt_bundle_attach, // Requires TLS/SSL for HTTPS
-      .timeout_ms = 10000,
-  };
-
-  esp_http_client_handle_t client = esp_http_client_init(&config);
-  if (client == NULL) {
-      ESP_LOGE("TELEGRAM", "Unable to create HTTP client");
-      return false;
-  }
-  esp_http_client_set_header(client, "Content-Type", "application/json");
-  esp_http_client_set_post_field(client, json_payload, strlen(json_payload));
-
-  esp_err_t err = esp_http_client_perform(client);
-  int status = esp_http_client_get_status_code(client);
-  bool success = err == ESP_OK && status >= 200 && status < 300;
-  if (success) {
-      ESP_LOGI("TELEGRAM", "Message sent! Status = %d", esp_http_client_get_status_code(client));
-  } else {
-      ESP_LOGE("TELEGRAM", "Message failed (result: %s, status: %d)",
-               esp_err_to_name(err), status);
-  }
-
-  esp_http_client_cleanup(client);
-  return success;
+    return send_telegram("🔌 ESP32: Somnus is UP!");
 }
 
 void app_main(void)
@@ -217,11 +224,22 @@ void app_main(void)
             continue;
         }
 
+        // Wait 10 minutes before waking the target machine.
+        ESP_LOGI(TAG, "Waiting %d minutes before sending WoL packet...",
+                 WOL_DELAY_MS / 60000);
+        for (int remaining = WOL_DELAY_MS / 60000; remaining > 0; remaining--) {
+            ESP_LOGI(TAG, "WoL in %d minute(s)...", remaining);
+            vTaskDelay(pdMS_TO_TICKS(60000));
+        }
+
         if (!send_magic_packet(TARGET_MAC)) {
             ESP_LOGW(TAG, "WoL send failed; reconnecting and retrying...");
             reconnect_wifi();
             continue;
         }
+
+        // Notify via Telegram that the magic packet was sent.
+        send_telegram("⚡ Somnus: Woke up the Jellybean!");
 
         break;
     }
@@ -231,5 +249,5 @@ void app_main(void)
     esp_wifi_stop();
 
     ESP_LOGI(TAG, "Entering Deep Sleep...");
-    // esp_deep_sleep_start();
+    esp_deep_sleep_start();
 }

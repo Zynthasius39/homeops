@@ -102,7 +102,7 @@ services:
         shutdown:
           battery_left_percent: 5
           battery_left_minutes: 5
-          battery_timer_seconds: 1200  # 20 minutes
+          battery_timer_seconds: 900  # 15 minutes
         usb:
           vendor_id: "051d"
           product_id: "0002"

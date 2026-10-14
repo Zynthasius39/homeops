@@ -28,19 +28,28 @@
     name: "{{ _quadlet.name }}"
     state: quadlet
     quadlet_dir: "{{ _quadlet.quadlet_dir }}"
+    env:
+      ALLOY_DEPLOY_MODE: docker
+      HOST_PROC: /host/proc
+      HOST_SYS: /host/sys
+      HOST_ETC: /host/etc
+      HOST_VAR: /host/var
+      HOST_RUN: /host/run
     command:
       - run
       - /etc/alloy/config.alloy
       - --storage.path=/var/lib/alloy/data
       - --server.http.listen-addr=0.0.0.0:12345
-    env:
-      ALLOY_DEPLOY_MODE: docker
     volume:
       - "{{ _quadlet.mount_src[0] }}:/etc/alloy/config.alloy:Z"
       - /var/log:/host/log:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro
     image: "{{ _quadlet.image }}"
     dns: "{{ _quadlet.dns }}"
     network: "{{ _quadlet.network }}"
+    pid: host
     ip: "{{ _quadlet.ip }}"
     security_opt: "{{ ['label=type:alloy.process'] if (ansible_facts.selinux.status | default('disabled') == 'enabled') else omit }}"
     mac_address: "{{ _quadlet.mac_address }}"
